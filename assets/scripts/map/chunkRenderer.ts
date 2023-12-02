@@ -4,7 +4,7 @@ import { Chunk } from './chunk';
 import { ChunkData } from './chunkData';
 import { MeshData } from './meshData';
 
-const { ccclass, property } = _decorator;
+const { ccclass, type, property } = _decorator;
 
 @ccclass('ChunkRenderer')
 export class ChunkRenderer extends Component {
@@ -14,10 +14,13 @@ export class ChunkRenderer extends Component {
     @property
     showGizmo = false;
 
-    mesh = new Mesh();
-    meshCollider = new physics.MeshCollider();
-    meshRender = new MeshRenderer();
+    @type(physics.MeshCollider)
+    meshCollider!: physics.MeshCollider;
 
+    @type(MeshRenderer)
+    meshRender!: MeshRenderer;
+
+    mesh = new Mesh();
     chunkData!: ChunkData;
 
     start(): void {

@@ -1,9 +1,9 @@
 export enum BlockType {
     Empty,
     Air,
-    Tree,
     GrassDirt,
     Dirt,
+    SandDirt,
     Sand,
     Stone,
     Water,

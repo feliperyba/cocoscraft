@@ -1,4 +1,4 @@
-import { _decorator, Canvas, Component, director, EventMouse, Input, input, lerp, Node, Quat, Vec2, Vec3 } from 'cc';
+import { _decorator, Component, EventMouse, Input, input, lerp, Node, Quat, Vec2, Vec3 } from 'cc';
 import { EDITOR } from 'cc/env';
 
 const { ccclass, property, type } = _decorator;
@@ -35,7 +35,7 @@ export default class OrbitCamera extends Component {
     target: Node | null = null;
 
     @property
-    radiusScaleSpeed = 2;
+    radiusScaleSpeed = 1;
 
     @property
     minRadius = 5;
@@ -90,18 +90,6 @@ export default class OrbitCamera extends Component {
     private radiusVelocity: number = 0;
 
     start(): void {
-        const canvas = director.getScene().getComponentInChildren(Canvas);
-        if (canvas && canvas.node) {
-            if (this.enableTouch) {
-                canvas.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
-                canvas.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
-                canvas.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this);
-            }
-            if (this.enableScaleRadius) {
-                canvas.node.on(Node.EventType.MOUSE_WHEEL, this.onMouseWhee, this);
-            }
-        }
-
         input.on(Input.EventType.MOUSE_DOWN, this.onTouchStart, this);
         input.on(Input.EventType.MOUSE_MOVE, this.onTouchMove, this);
         input.on(Input.EventType.MOUSE_UP, this.onTouchEnd, this);
@@ -154,7 +142,7 @@ export default class OrbitCamera extends Component {
 
     onMouseWhee(event: EventMouse): void {
         const scrollY = event.getScrollY();
-        this.radiusVelocity += this.radiusScaleSpeed * -Math.sign(scrollY) * 0.1;
+        this.radiusVelocity += this.radiusScaleSpeed * -Math.sign(scrollY) * 0.25;
     }
 
     limitRotation(): void {
@@ -163,7 +151,7 @@ export default class OrbitCamera extends Component {
         rotation.z = 0;
     }
 
-    update(dt): void {
+    update(dt: number): void {
         let targetRotation = this.targetRotationVec3;
 
         if (this.autoRotate && !this.touched) {
