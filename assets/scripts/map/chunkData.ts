@@ -2,6 +2,7 @@ import { _decorator, Vec3 } from 'cc';
 
 import { BlockType } from './models/blocks';
 import { World } from './world';
+
 const { ccclass, type, property } = _decorator;
 
 @ccclass('ChunkData')

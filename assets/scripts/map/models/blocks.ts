@@ -7,4 +7,14 @@ export enum BlockType {
     Sand,
     Stone,
     Water,
+    Tree,
+}
+
+export enum BlockDirection {
+    Up,
+    Down,
+    Left,
+    Right,
+    Forward,
+    Back,
 }

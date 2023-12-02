@@ -5,7 +5,7 @@ import { TextureDataWrapper } from './textureData';
 const { ccclass, property } = _decorator;
 
 @ccclass('BlockDataSO')
-export default class BlockDataSO extends Component {
+export class BlockDataSO extends Component {
     @property
     textureSizeX: number = 0;
 

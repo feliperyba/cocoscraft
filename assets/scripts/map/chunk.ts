@@ -2,15 +2,29 @@ import { _decorator, Vec3 } from 'cc';
 
 import { ChunkData } from './chunkData';
 import { MeshData } from './meshData';
-import { BlockType } from './models/blocks';
+import { BlockType } from './models';
+
 const { ccclass } = _decorator;
 
 @ccclass('Chunk')
 export class Chunk {
     static getMeshData(chunkData: ChunkData): MeshData {
-        const meshData = new MeshData(true);
+        let meshData = new MeshData(true);
 
-        return { chunkData } as any as MeshData;
+        this.loopThroughChunks(
+            chunkData,
+            (x, y, z) =>
+                (meshData = BlockHelper.GetMeshData(
+                    chunkData,
+                    x,
+                    y,
+                    z,
+                    meshData,
+                    chunkData.blocks[this.getIndexFromPosition(chunkData, x, y, z)]
+                ))
+        );
+
+        return meshData;
     }
 
     static loopThroughChunks(chunkData: ChunkData, cb: (x: number, y: number, z: number) => void): void {

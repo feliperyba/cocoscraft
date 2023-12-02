@@ -1,6 +1,6 @@
 import { _decorator, Component } from 'cc';
 
-import BlockDataSO from '../models/blocks';
+import { BlockDataSO } from '../models';
 
 const { ccclass } = _decorator;
 
@@ -11,7 +11,6 @@ export class BlockDataCreator extends Component {
     }
 
     createBlockData(): void {
-        // Create a new BlockDataSO instance here
         const blockData = new BlockDataSO();
         console.log('BlockData created', blockData);
     }

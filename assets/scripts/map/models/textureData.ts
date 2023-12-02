@@ -19,6 +19,9 @@ export class TextureData {
     side: Vec2 = new Vec2();
 
     @property
+    isPrefab: boolean = false;
+
+    @property
     isSolid: boolean = true;
 
     @property
