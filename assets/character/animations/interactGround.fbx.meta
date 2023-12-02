@@ -1,0 +1,138 @@
+{
+  "ver": "2.3.12",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "a91aff58-a826-4bc1-8c40-f636e007e1a6",
+  "files": [
+    "__original-animation-0.cconb",
+    "__original-animation-1.cconb"
+  ],
+  "subMetas": {
+    "adecc": {
+      "importer": "gltf-animation",
+      "uuid": "a91aff58-a826-4bc1-8c40-f636e007e1a6@adecc",
+      "displayName": "",
+      "id": "adecc",
+      "name": "Root|0.Targeting Pose.animation",
+      "userData": {
+        "gltfIndex": 0,
+        "wrapMode": 2,
+        "sample": 30,
+        "span": {
+          "from": 0,
+          "to": 0.0416666679084301
+        },
+        "events": []
+      },
+      "ver": "1.0.17",
+      "imported": true,
+      "files": [
+        ".cconb"
+      ],
+      "subMetas": {}
+    },
+    "1e0f1": {
+      "importer": "gltf-animation",
+      "uuid": "a91aff58-a826-4bc1-8c40-f636e007e1a6@1e0f1",
+      "displayName": "",
+      "id": "1e0f1",
+      "name": "Root|Interact_ground.animation",
+      "userData": {
+        "gltfIndex": 1,
+        "wrapMode": 2,
+        "sample": 30,
+        "span": {
+          "from": 0,
+          "to": 2.5416667461395264
+        },
+        "events": []
+      },
+      "ver": "1.0.17",
+      "imported": true,
+      "files": [
+        ".cconb"
+      ],
+      "subMetas": {}
+    },
+    "d52f7": {
+      "importer": "gltf-scene",
+      "uuid": "a91aff58-a826-4bc1-8c40-f636e007e1a6@d52f7",
+      "displayName": "",
+      "id": "d52f7",
+      "name": "interactGround.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "animationImportSettings": [
+      {
+        "name": "Root|0.Targeting Pose",
+        "duration": 0.0416666679084301,
+        "fps": 30,
+        "splits": [
+          {
+            "name": "Root|0.Targeting Pose",
+            "from": 0,
+            "to": 0.0416666679084301,
+            "wrapMode": 2,
+            "previousId": "adecc"
+          }
+        ]
+      },
+      {
+        "name": "Root|Interact_ground",
+        "duration": 2.5416667461395264,
+        "fps": 30,
+        "splits": [
+          {
+            "name": "Root|Interact_ground",
+            "from": 0,
+            "to": 2.5416667461395264,
+            "wrapMode": 2,
+            "previousId": "1e0f1"
+          }
+        ]
+      }
+    ],
+    "redirect": "a91aff58-a826-4bc1-8c40-f636e007e1a6@d52f7",
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [],
+      "skeletons": [],
+      "textures": [],
+      "materials": [],
+      "scenes": [
+        "a91aff58-a826-4bc1-8c40-f636e007e1a6@d52f7"
+      ]
+    }
+  }
+}

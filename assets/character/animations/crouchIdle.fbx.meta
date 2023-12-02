@@ -1,0 +1,138 @@
+{
+  "ver": "2.3.12",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "243a3236-112d-4caf-8c63-576f36b08a29",
+  "files": [
+    "__original-animation-0.cconb",
+    "__original-animation-1.cconb"
+  ],
+  "subMetas": {
+    "20535": {
+      "importer": "gltf-scene",
+      "uuid": "243a3236-112d-4caf-8c63-576f36b08a29@20535",
+      "displayName": "",
+      "id": "20535",
+      "name": "crouchIdle.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "adecc": {
+      "importer": "gltf-animation",
+      "uuid": "243a3236-112d-4caf-8c63-576f36b08a29@adecc",
+      "displayName": "",
+      "id": "adecc",
+      "name": "Root|0.Targeting Pose.animation",
+      "userData": {
+        "gltfIndex": 0,
+        "wrapMode": 2,
+        "sample": 30,
+        "span": {
+          "from": 0,
+          "to": 0.0416666679084301
+        },
+        "events": []
+      },
+      "ver": "1.0.17",
+      "imported": true,
+      "files": [
+        ".cconb"
+      ],
+      "subMetas": {}
+    },
+    "9b538": {
+      "importer": "gltf-animation",
+      "uuid": "243a3236-112d-4caf-8c63-576f36b08a29@9b538",
+      "displayName": "",
+      "id": "9b538",
+      "name": "Root|CrouchIdle.animation",
+      "userData": {
+        "gltfIndex": 1,
+        "wrapMode": 2,
+        "sample": 30,
+        "span": {
+          "from": 0,
+          "to": 1
+        },
+        "events": []
+      },
+      "ver": "1.0.17",
+      "imported": true,
+      "files": [
+        ".cconb"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "animationImportSettings": [
+      {
+        "name": "Root|0.Targeting Pose",
+        "duration": 0.0416666679084301,
+        "fps": 30,
+        "splits": [
+          {
+            "name": "Root|0.Targeting Pose",
+            "from": 0,
+            "to": 0.0416666679084301,
+            "wrapMode": 2,
+            "previousId": "adecc"
+          }
+        ]
+      },
+      {
+        "name": "Root|CrouchIdle",
+        "duration": 1,
+        "fps": 30,
+        "splits": [
+          {
+            "name": "Root|CrouchIdle",
+            "from": 0,
+            "to": 1,
+            "wrapMode": 2,
+            "previousId": "9b538"
+          }
+        ]
+      }
+    ],
+    "redirect": "243a3236-112d-4caf-8c63-576f36b08a29@20535",
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [],
+      "skeletons": [],
+      "textures": [],
+      "materials": [],
+      "scenes": [
+        "243a3236-112d-4caf-8c63-576f36b08a29@20535"
+      ]
+    }
+  }
+}

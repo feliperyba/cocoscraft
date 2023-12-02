@@ -1,0 +1,138 @@
+{
+  "ver": "2.3.12",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "c613bb5f-e659-4ea2-861a-0810bbde8c8b",
+  "files": [
+    "__original-animation-0.cconb",
+    "__original-animation-1.cconb"
+  ],
+  "subMetas": {
+    "adecc": {
+      "importer": "gltf-animation",
+      "uuid": "c613bb5f-e659-4ea2-861a-0810bbde8c8b@adecc",
+      "displayName": "",
+      "id": "adecc",
+      "name": "Root|0.Targeting Pose.animation",
+      "userData": {
+        "gltfIndex": 0,
+        "wrapMode": 2,
+        "sample": 30,
+        "span": {
+          "from": 0,
+          "to": 0.0416666679084301
+        },
+        "events": []
+      },
+      "ver": "1.0.17",
+      "imported": true,
+      "files": [
+        ".cconb"
+      ],
+      "subMetas": {}
+    },
+    "d9f43": {
+      "importer": "gltf-animation",
+      "uuid": "c613bb5f-e659-4ea2-861a-0810bbde8c8b@d9f43",
+      "displayName": "",
+      "id": "d9f43",
+      "name": "Root|CrouchWalk.animation",
+      "userData": {
+        "gltfIndex": 1,
+        "wrapMode": 2,
+        "sample": 30,
+        "span": {
+          "from": 0,
+          "to": 1.3333333730697632
+        },
+        "events": []
+      },
+      "ver": "1.0.17",
+      "imported": true,
+      "files": [
+        ".cconb"
+      ],
+      "subMetas": {}
+    },
+    "30e3d": {
+      "importer": "gltf-scene",
+      "uuid": "c613bb5f-e659-4ea2-861a-0810bbde8c8b@30e3d",
+      "displayName": "",
+      "id": "30e3d",
+      "name": "crouchWalk.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "animationImportSettings": [
+      {
+        "name": "Root|0.Targeting Pose",
+        "duration": 0.0416666679084301,
+        "fps": 30,
+        "splits": [
+          {
+            "name": "Root|0.Targeting Pose",
+            "from": 0,
+            "to": 0.0416666679084301,
+            "wrapMode": 2,
+            "previousId": "adecc"
+          }
+        ]
+      },
+      {
+        "name": "Root|CrouchWalk",
+        "duration": 1.3333333730697632,
+        "fps": 30,
+        "splits": [
+          {
+            "name": "Root|CrouchWalk",
+            "from": 0,
+            "to": 1.3333333730697632,
+            "wrapMode": 2,
+            "previousId": "d9f43"
+          }
+        ]
+      }
+    ],
+    "redirect": "c613bb5f-e659-4ea2-861a-0810bbde8c8b@30e3d",
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [],
+      "skeletons": [],
+      "textures": [],
+      "materials": [],
+      "scenes": [
+        "c613bb5f-e659-4ea2-861a-0810bbde8c8b@30e3d"
+      ]
+    }
+  }
+}

@@ -1,0 +1,15 @@
+node_modules/
+package.json
+*.cjs
+.vscode/
+.creator/
+#assets/
+#///////////////////////////
+# Cocos Creator 3D Project
+#///////////////////////////
+library/
+temp/
+local/
+build/
+profiles/
+native/

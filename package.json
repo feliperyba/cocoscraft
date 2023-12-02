@@ -1,0 +1,19 @@
+{
+  "name": "CocosCraft",
+  "uuid": "a4680fa1-01f2-4c03-a5ad-dc4eec02721d",
+  "creator": {
+    "version": "3.8.1"
+  },
+  "devDependencies": {
+    "@rushstack/eslint-patch": "^1.5.1",
+    "@typescript-eslint/eslint-plugin": "^6.11.0",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "eslint-plugin-simple-import-sort": "^10.0.0"
+  },
+  "dependencies": {
+    "mobx": "^6.11.0"
+  }
+}
