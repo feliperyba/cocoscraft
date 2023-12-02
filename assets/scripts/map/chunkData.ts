@@ -6,7 +6,7 @@ const { ccclass, type, property } = _decorator;
 
 @ccclass('ChunkData')
 export class ChunkData {
-    @type([BlockType])
+    @type(Array<BlockType>)
     blocks: BlockType[] = [];
 
     @property
@@ -18,9 +18,7 @@ export class ChunkData {
     @type(World)
     worldNode: World;
 
-    @type(Vec3)
     worldPosition: Vec3;
-
     isModified = false;
 
     constructor(worldNode: World, worldPosition: Vec3) {

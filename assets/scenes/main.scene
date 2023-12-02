@@ -457,20 +457,20 @@
       "x": -20,
       "y": 70
     },
-    "_target": {
+    "target": {
       "__id__": 16
     },
     "radiusScaleSpeed": 1,
     "minRadius": 5,
     "maxRadius": 12,
     "followTargetRotationY": false,
-    "_startRotation": {
+    "startRotation": {
       "__type__": "cc.Vec3",
       "x": 0,
       "y": 0,
       "z": 0
     },
-    "_targetRadius": 10,
+    "targetRadius": 10,
     "_id": "b9e6+A7lREK5HIVwtvmEHc"
   },
   {
