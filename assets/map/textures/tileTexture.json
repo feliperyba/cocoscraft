@@ -175,7 +175,7 @@
     "image": "tileTexture.png",
     "format": "RGBA8888",
     "size": {
-      "w": 128,
+      "w": 1024,
       "h": 1024
     },
     "scale": 1

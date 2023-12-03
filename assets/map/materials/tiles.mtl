@@ -11,7 +11,7 @@
   "_techIdx": 0,
   "_defines": [
     {
-      "DCC_APP_NAME": 2,
+      "USE_INSTANCING": true,
       "USE_ALBEDO_MAP": true
     },
     {},

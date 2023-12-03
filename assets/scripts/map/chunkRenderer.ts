@@ -20,7 +20,11 @@ export class ChunkRenderer extends Component {
     @type(MeshRenderer)
     meshRender!: MeshRenderer;
 
+    @type(MeshRenderer)
+    meshRenderWater!: MeshRenderer;
+
     mesh = new Mesh();
+    waterMesh = new Mesh();
     chunkData!: ChunkData;
 
     start(): void {
@@ -55,11 +59,11 @@ export class ChunkRenderer extends Component {
     }
 
     private renderMesh(meshData: MeshData): void {
-        const vertices = meshData.vertices.concat(meshData.waterMesh.vertices).flatMap(v => [v.x, v.y, v.z]);
+        const vertices = meshData.vertices.concat(meshData.waterMesh?.vertices || []).flatMap(v => [v.x, v.y, v.z]);
         const triangles = meshData.triangles.concat(
             meshData.waterMesh?.triangles.map((val: number) => val + meshData.vertices.length) || []
         );
-        const uvs = meshData.uv.concat(meshData.waterMesh.uv).flatMap(uv => [uv.x, uv.y]);
+        const uvs = meshData.uv.concat(meshData.waterMesh?.uv || []).flatMap(uv => [uv.x, uv.y]);
         const geometry: primitives.IGeometry = {
             positions: vertices,
             indices: triangles,

@@ -205,17 +205,17 @@
     "up": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 7
+      "y": 0
     },
     "down": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 7
+      "y": 0
     },
     "side": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 7
+      "y": 0
     },
     "isPrefab": false,
     "isSolid": true,
@@ -308,17 +308,17 @@
     "up": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 4
+      "y": 3
     },
     "down": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 7
+      "y": 0
     },
     "side": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 6
+      "y": 1
     },
     "isPrefab": false,
     "isSolid": true,
@@ -411,17 +411,17 @@
     "up": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 3
+      "y": 4
     },
     "down": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 7
+      "y": 0
     },
     "side": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 5
+      "y": 2
     },
     "isPrefab": false,
     "isSolid": true,
@@ -514,17 +514,17 @@
     "up": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 3
+      "y": 4
     },
     "down": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 3
+      "y": 4
     },
     "side": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 3
+      "y": 4
     },
     "isPrefab": false,
     "isSolid": true,
@@ -617,17 +617,17 @@
     "up": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 2
+      "y": 5
     },
     "down": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 2
+      "y": 5
     },
     "side": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 2
+      "y": 5
     },
     "isPrefab": false,
     "isSolid": true,
@@ -720,17 +720,17 @@
     "up": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 0
+      "y": 7
     },
     "down": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 0
+      "y": 7
     },
     "side": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 0
+      "y": 7
     },
     "isPrefab": false,
     "isSolid": false,
@@ -823,17 +823,17 @@
     "up": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 0
+      "y": 7
     },
     "down": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 0
+      "y": 7
     },
     "side": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 0
+      "y": 7
     },
     "isPrefab": false,
     "isSolid": false,
@@ -926,17 +926,17 @@
     "up": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 1
+      "y": 6
     },
     "down": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 1
+      "y": 6
     },
     "side": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 1
+      "y": 6
     },
     "isPrefab": false,
     "isSolid": false,
@@ -1029,17 +1029,17 @@
     "up": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 0
+      "y": 7
     },
     "down": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 0
+      "y": 7
     },
     "side": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 0
+      "y": 7
     },
     "isPrefab": true,
     "isSolid": false,

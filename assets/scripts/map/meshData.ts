@@ -11,12 +11,13 @@ export class MeshData {
     collisionVertices: Vec3[] = [];
     collisionTriangles: number[] = [];
 
-    waterMesh: MeshData;
+    waterMesh: MeshData | null = null;
     isMainMesh = true;
 
-    constructor(isMainMesh: boolean) {
-        if (!isMainMesh) {
+    constructor(isWater: boolean) {
+        if (isWater) {
             this.waterMesh = new MeshData(false);
+            this.isMainMesh = false;
         }
     }
 

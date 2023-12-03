@@ -5,14 +5,13 @@
   "__editorExtras__": {},
   "_native": "",
   "_effectAsset": {
-    "__uuid__": "113a72d8-20cd-42cd-ba96-37cc1046971a",
+    "__uuid__": "c8f66d17-351a-48da-a12c-0212d28575c4",
     "__expectedType__": "cc.EffectAsset"
   },
-  "_techIdx": 0,
+  "_techIdx": 1,
   "_defines": [
     {
-      "USE_TWOSIDE": true,
-      "USE_ALBEDO_MAP": true
+      "USE_INSTANCING": true
     },
     {},
     {},
@@ -75,7 +74,9 @@
         "b": 248,
         "a": 241
       },
-      "mainTexture": {
+      "occlusion": 0.347,
+      "roughness": 0.51,
+      "normalMap": {
         "__uuid__": "495fb923-713e-4b0d-908b-557c723b8aed@6c48a",
         "__expectedType__": "cc.Texture2D"
       }

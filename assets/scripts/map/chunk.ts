@@ -30,10 +30,10 @@ export class Chunk {
     }
 
     static loopThroughChunks(chunkData: ChunkData, cb: (x: number, y: number, z: number) => void): void {
-        chunkData.blocks.forEach((c, index) => {
+        for (let index = 0; index < chunkData.blocks.length; index++) {
             const pos = this.getPositionFromIndex(index, chunkData);
             cb(pos.x, pos.y, pos.z);
-        });
+        }
     }
 
     static getPositionFromIndex(index: number, chunkData: ChunkData): Vec3 {
@@ -52,17 +52,16 @@ export class Chunk {
         ) {
             const index = this.getIndexFromPosition(chunkData, localPosition.x, localPosition.y, localPosition.z);
             chunkData.blocks[index] = block;
-
-            return;
+        } else {
+            throw new Error('Need to ask World for appropriate chunk');
         }
-
-        throw new Error('Block out of range');
-        // WorldDataHelper.setBlock(chunkData.worldNode, localPosition, block);
     }
 
-    static getBlockFromChunkCoordinates(chunkData: ChunkData, pos: { x: number; y: number; z: number }): BlockType {
-        const { x, y, z } = pos;
+    static getBlockFromChunkCoordinatesVec3(chunkData: ChunkData, pos: Vec3): BlockType {
+        return this.getBlockFromChunkCoordinates(chunkData, pos.x, pos.y, pos.z);
+    }
 
+    static getBlockFromChunkCoordinates(chunkData: ChunkData, x: number, y: number, z: number): BlockType {
         if (this.inRange(chunkData, x) && this.inRangeHeight(chunkData, y) && this.inRange(chunkData, z)) {
             const index = this.getIndexFromPosition(chunkData, x, y, z);
             return chunkData.blocks[index];
@@ -93,20 +92,12 @@ export class Chunk {
         return pos;
     }
 
-    private static inRange(chunkData: ChunkData, x: number): boolean {
-        if (x < 0 || x >= chunkData.chunkSize) {
-            return false;
-        }
-
-        return true;
+    private static inRange(chunkData: ChunkData, axisCoordinate: number): boolean {
+        return axisCoordinate >= 0 && axisCoordinate < chunkData.chunkSize;
     }
 
-    private static inRangeHeight(chunkData: ChunkData, y: number): boolean {
-        if (y < 0 || y >= chunkData.chunkHeight) {
-            return false;
-        }
-
-        return true;
+    private static inRangeHeight(chunkData: ChunkData, yCoordinate: number): boolean {
+        return yCoordinate >= 0 && yCoordinate < chunkData.chunkHeight;
     }
 
     private static getIndexFromPosition(chunkData: ChunkData, x: number, y: number, z: number): number {

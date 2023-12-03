@@ -12,12 +12,12 @@ const { ccclass } = _decorator;
 @ccclass('BlockHelper')
 export class BlockHelper {
     private static directions: BlockDirection[] = [
-        BlockDirection.Up,
+        BlockDirection.Back,
         BlockDirection.Down,
+        BlockDirection.Forward,
         BlockDirection.Left,
         BlockDirection.Right,
-        BlockDirection.Forward,
-        BlockDirection.Back,
+        BlockDirection.Up,
     ];
 
     static getMeshData(
@@ -32,12 +32,11 @@ export class BlockHelper {
 
         for (const direction of this.directions) {
             const neighbourBlockCoordinates = new Vec3(x, y, z).add(getVector(direction));
-            const neighbourBlockType = Chunk.getBlockFromChunkCoordinates(chunk, neighbourBlockCoordinates);
+            const neighbourBlockType = Chunk.getBlockFromChunkCoordinatesVec3(chunk, neighbourBlockCoordinates);
 
-            if (
-                neighbourBlockType !== BlockType.Empty &&
-                !BlockDataManager.blockTextureDataDictionary.get(neighbourBlockType)?.isSolid
-            ) {
+            const isSolid = BlockDataManager.blockTextureDataDictionary.get(neighbourBlockType)?.isSolid;
+
+            if (neighbourBlockType !== BlockType.Empty && !isSolid) {
                 if (blockType === BlockType.Water && neighbourBlockType === BlockType.Air) {
                     meshData.waterMesh = this.getFaceDataIn(direction, x, y, z, meshData.waterMesh, blockType);
                 } else {
@@ -78,37 +77,45 @@ export class BlockHelper {
             md.addVertex(new Vec3(x + dx, y + dy, z + dz), generatesCollider);
         };
 
-        verticesLookup[direction].forEach((vertex: [number, number, number]) => addVertex(...vertex, meshData));
+        verticesLookup[direction].forEach((vertex: [number, number, number]) => {
+            console.log('addVertex', vertex, direction, blockType, meshData);
+            addVertex(...vertex, meshData);
+        });
     }
 
     static faceUVs(direction: BlockDirection, blockType: BlockType): Vec2[] {
         const uv: Vec2[] = [];
+
         const tilePos = this.texturePosition(direction, blockType);
 
+        console.log('faceUVs', tilePos, direction, blockType);
+
         uv[0] = new Vec2(
-            BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.tileSizeX - BlockDataManager.textureOffset,
+            BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.textureOffset,
             BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.textureOffset
         );
 
         uv[1] = new Vec2(
             BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.tileSizeX - BlockDataManager.textureOffset,
-            BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.tileSizeY - BlockDataManager.textureOffset
+            BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.textureOffset
         );
 
         uv[2] = new Vec2(
-            BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.textureOffset,
+            BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.tileSizeX - BlockDataManager.textureOffset,
             BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.tileSizeY - BlockDataManager.textureOffset
         );
 
         uv[3] = new Vec2(
             BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.textureOffset,
-            BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.textureOffset
+            BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.tileSizeY - BlockDataManager.textureOffset
         );
 
         return uv;
     }
 
     static texturePosition(direction: BlockDirection, blockType: BlockType): Vec2 {
+        console.log('texturePosition', direction, blockType);
+
         const texturePositions = getTexturePositions(blockType);
         return texturePositions[direction] || texturePositions.default;
     }
@@ -130,28 +137,28 @@ const getTexturePositions = (
 
 const verticesLookup = {
     [BlockDirection.Back]: [
-        [-0.5, -0.5, -0.5],
         [-0.5, 0.5, -0.5],
         [0.5, 0.5, -0.5],
         [0.5, -0.5, -0.5],
+        [-0.5, -0.5, -0.5],
     ],
     [BlockDirection.Forward]: [
         [0.5, -0.5, 0.5],
-        [0.5, 0.5, 0.5],
-        [-0.5, 0.5, 0.5],
         [-0.5, -0.5, 0.5],
+        [-0.5, 0.5, 0.5],
+        [0.5, 0.5, 0.5],
+    ],
+    [BlockDirection.Right]: [
+        [0.5, 0.5, 0.5],
+        [0.5, -0.5, 0.5],
+        [0.5, -0.5, -0.5],
+        [0.5, 0.5, -0.5],
     ],
     [BlockDirection.Left]: [
-        [-0.5, -0.5, 0.5],
         [-0.5, 0.5, 0.5],
         [-0.5, 0.5, -0.5],
         [-0.5, -0.5, -0.5],
-    ],
-    [BlockDirection.Right]: [
-        [0.5, -0.5, -0.5],
-        [0.5, 0.5, -0.5],
-        [0.5, 0.5, 0.5],
-        [0.5, -0.5, 0.5],
+        [-0.5, -0.5, 0.5],
     ],
     [BlockDirection.Down]: [
         [-0.5, -0.5, -0.5],

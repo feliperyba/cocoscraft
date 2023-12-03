@@ -1,4 +1,4 @@
-import { _decorator, Component, instantiate, Prefab, Vec3 } from 'cc';
+import { _decorator, CCFloat, Component, instantiate, Prefab, Vec3 } from 'cc';
 
 import { Chunk } from './chunk';
 import { ChunkData } from './chunkData';
@@ -10,19 +10,19 @@ const { ccclass, property } = _decorator;
 @ccclass('World')
 export class World extends Component {
     @property
-    mapSizeInChunks = 3;
+    mapSizeInChunks!: number;
 
     @property
-    chunkSize = 8;
+    chunkSize!: number;
 
     @property
-    chunkHeight = 20;
+    chunkHeight!: number;
 
     @property
-    waterThreshold = 5;
+    waterThreshold!: number;
 
-    @property
-    noiseScale = 0.03;
+    @property({ type: CCFloat })
+    noiseScale!: number;
 
     @property(Prefab)
     chunkPrefab!: Prefab;
@@ -35,7 +35,12 @@ export class World extends Component {
 
         for (let x = 0; x < this.mapSizeInChunks; x++) {
             for (let z = 0; z < this.mapSizeInChunks; z++) {
-                const data = new ChunkData(this, new Vec3(x * this.chunkSize, 0, z * this.chunkSize));
+                const data = new ChunkData(
+                    this,
+                    new Vec3(x * this.chunkSize, 0, z * this.chunkSize),
+                    this.chunkSize,
+                    this.chunkHeight
+                );
                 this.generateVoxels(data);
                 this.chunkDataDictionary.set(data.worldPosition, data);
             }
@@ -52,7 +57,9 @@ export class World extends Component {
 
             chunkRenderer.initChunk(data);
             chunkRenderer.updateChunkWithData(meshData);
-            chunkRenderer.meshRender.onGeometryChanged();
+
+            // chunkRenderer.meshRender.onGeometryChanged();
+            // chunkRenderer.meshRenderWater.onGeometryChanged();
 
             this.node.addChild(chunkObject);
         }

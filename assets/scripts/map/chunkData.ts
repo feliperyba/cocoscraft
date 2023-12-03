@@ -3,26 +3,20 @@ import { _decorator, Vec3 } from 'cc';
 import { BlockType } from './models/blocks';
 import { World } from './world';
 
-const { ccclass, type, property } = _decorator;
+const { ccclass } = _decorator;
 
 @ccclass('ChunkData')
 export class ChunkData {
-    @type(Array<BlockType>)
     blocks: BlockType[] = [];
-
-    @property
-    chunkSize = 16;
-
-    @property
-    chunkHeight = 100;
-
-    @type(World)
+    chunkSize: number;
+    chunkHeight: number;
     worldNode: World;
-
     worldPosition: Vec3;
     isModified = false;
 
-    constructor(worldNode: World, worldPosition: Vec3) {
+    constructor(worldNode: World, worldPosition: Vec3, chunkSize: number, chunkHeight: number) {
+        this.chunkSize = chunkSize;
+        this.chunkHeight = chunkHeight;
         this.worldNode = worldNode;
         this.worldPosition = worldPosition;
     }
