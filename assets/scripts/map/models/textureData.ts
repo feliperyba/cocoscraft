@@ -1,4 +1,4 @@
-import { _decorator, Component, Vec2 } from 'cc';
+import { _decorator, CCInteger, Component, Vec2 } from 'cc';
 
 import { BlockType } from './blocks';
 
@@ -6,7 +6,7 @@ const { ccclass, property, type } = _decorator;
 
 @ccclass('TextureData')
 export class TextureData {
-    @type(BlockType)
+    @property({ type: CCInteger })
     blockType: BlockType = BlockType.Empty;
 
     @property
@@ -31,6 +31,6 @@ export class TextureData {
 // this is quite an strange way to type the array, but it works on the editor
 @ccclass('TextureDataWrapper')
 export class TextureDataWrapper extends Component {
-    @property
-    textureData: TextureData = new TextureData();
+    @type(TextureData)
+    textureData: TextureData;
 }

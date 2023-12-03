@@ -1,8 +1,10 @@
 import { _decorator, Vec3 } from 'cc';
 
+import { BlockHelper } from './blockHelper';
 import { ChunkData } from './chunkData';
 import { MeshData } from './meshData';
 import { BlockType } from './models';
+import { World } from './world';
 
 const { ccclass } = _decorator;
 
@@ -14,7 +16,7 @@ export class Chunk {
         this.loopThroughChunks(
             chunkData,
             (x, y, z) =>
-                (meshData = BlockHelper.GetMeshData(
+                (meshData = BlockHelper.getMeshData(
                     chunkData,
                     x,
                     y,
@@ -42,7 +44,7 @@ export class Chunk {
         return new Vec3(x, y, z);
     }
 
-    public static setBlock(chunkData: ChunkData, localPosition: Vec3, block: BlockType): void {
+    static setBlock(chunkData: ChunkData, localPosition: Vec3, block: BlockType): void {
         if (
             this.inRange(chunkData, localPosition.x) &&
             this.inRangeHeight(chunkData, localPosition.y) &&
@@ -54,7 +56,41 @@ export class Chunk {
             return;
         }
 
-        WorldDataHelper.setBlock(chunkData.worldNode, localPosition, block);
+        throw new Error('Block out of range');
+        // WorldDataHelper.setBlock(chunkData.worldNode, localPosition, block);
+    }
+
+    static getBlockFromChunkCoordinates(chunkData: ChunkData, pos: { x: number; y: number; z: number }): BlockType {
+        const { x, y, z } = pos;
+
+        if (this.inRange(chunkData, x) && this.inRangeHeight(chunkData, y) && this.inRange(chunkData, z)) {
+            const index = this.getIndexFromPosition(chunkData, x, y, z);
+            return chunkData.blocks[index];
+        }
+
+        return chunkData.worldNode.getBlockFromChunkCoordinates(
+            chunkData.worldPosition.x + x,
+            chunkData.worldPosition.y + y,
+            chunkData.worldPosition.z + z
+        );
+    }
+
+    static getBlockInChunkCoordinates(chunkData: ChunkData, pos: Vec3): Vec3 {
+        return new Vec3(
+            pos.x - chunkData.worldPosition.x,
+            pos.y - chunkData.worldPosition.y,
+            pos.z - chunkData.worldPosition.z
+        );
+    }
+
+    static chunkPositionFromBlockCoords(world: World, x: number, y: number, z: number): Vec3 {
+        const pos = new Vec3(
+            Math.floor(x / world.chunkSize) * world.chunkSize,
+            Math.floor(y / world.chunkHeight) * world.chunkHeight,
+            Math.floor(z / world.chunkSize) * world.chunkSize
+        );
+
+        return pos;
     }
 
     private static inRange(chunkData: ChunkData, x: number): boolean {
@@ -75,24 +111,5 @@ export class Chunk {
 
     private static getIndexFromPosition(chunkData: ChunkData, x: number, y: number, z: number): number {
         return x + chunkData.chunkSize * y + chunkData.chunkSize * chunkData.chunkHeight * z;
-    }
-
-    public static getBlockFromChunkCoordinates(
-        chunkData: ChunkData,
-        pos: { x: number; y: number; z: number }
-    ): BlockType {
-        const { x, y, z } = pos;
-
-        if (this.inRange(chunkData, x) && this.inRangeHeight(chunkData, y) && this.inRange(chunkData, z)) {
-            const index = this.getIndexFromPosition(chunkData, x, y, z);
-            return chunkData.blocks[index];
-        }
-
-        return chunkData.worldNode.getBlockFromChunkCoordinates(
-            chunkData,
-            chunkData.worldPosition.x + x,
-            chunkData.worldPosition.y + y,
-            chunkData.worldPosition.z + z
-        );
     }
 }

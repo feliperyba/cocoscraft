@@ -35,16 +35,14 @@ export class BlockHelper {
             const neighbourBlockType = Chunk.getBlockFromChunkCoordinates(chunk, neighbourBlockCoordinates);
 
             if (
-                neighbourBlockType === BlockType.Empty ||
-                BlockDataManager.blockTextureDataDictionary[neighbourBlockType].isSolid
+                neighbourBlockType !== BlockType.Empty &&
+                !BlockDataManager.blockTextureDataDictionary.get(neighbourBlockType)?.isSolid
             ) {
-                continue;
-            }
-
-            if (blockType === BlockType.Water && neighbourBlockType === BlockType.Air) {
-                meshData.waterMesh = this.getFaceDataIn(direction, x, y, z, meshData.waterMesh, blockType);
-            } else {
-                meshData = this.getFaceDataIn(direction, x, y, z, meshData, blockType);
+                if (blockType === BlockType.Water && neighbourBlockType === BlockType.Air) {
+                    meshData.waterMesh = this.getFaceDataIn(direction, x, y, z, meshData.waterMesh, blockType);
+                } else {
+                    meshData = this.getFaceDataIn(direction, x, y, z, meshData, blockType);
+                }
             }
         }
 
@@ -60,7 +58,7 @@ export class BlockHelper {
         blockType: BlockType
     ): MeshData {
         this.getFaceVertices(direction, x, y, z, meshData, blockType);
-        meshData.addQuadTriangle(BlockDataManager.blockTextureDataDictionary[blockType].generatesCollider);
+        meshData.addQuadTriangle(BlockDataManager.blockTextureDataDictionary.get(blockType).generatesCollider);
         meshData.uv.push(...this.faceUVs(direction, blockType));
 
         return meshData;
@@ -74,13 +72,13 @@ export class BlockHelper {
         meshData: MeshData,
         blockType: BlockType
     ): void {
-        const generatesCollider = BlockDataManager.blockTextureDataDictionary[blockType].generatesCollider;
+        const generatesCollider = BlockDataManager.blockTextureDataDictionary.get(blockType).generatesCollider;
 
-        const addVertex = (dx: number, dy: number, dz: number): void => {
-            meshData.addVertex(new Vec3(x + dx, y + dy, z + dz), generatesCollider);
+        const addVertex = (dx: number, dy: number, dz: number, md: MeshData): void => {
+            md.addVertex(new Vec3(x + dx, y + dy, z + dz), generatesCollider);
         };
 
-        verticesLookup[direction].forEach((vertex: [number, number, number]) => addVertex(...vertex));
+        verticesLookup[direction].forEach((vertex: [number, number, number]) => addVertex(...vertex, meshData));
     }
 
     static faceUVs(direction: BlockDirection, blockType: BlockType): Vec2[] {

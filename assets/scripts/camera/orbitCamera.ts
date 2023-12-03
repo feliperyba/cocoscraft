@@ -112,7 +112,7 @@ export default class OrbitCamera extends Component {
 
     resetTargetRotation(): void {
         let targetRotation = this.targetRotationVec3.set(this.startRotation);
-        if (!this.followTargetRotationY) return;
+        if (!this.followTargetRotationY || !this.target) return;
 
         targetRotation = tempVec3_2.set(targetRotation);
         Quat.toEuler(tempVec3, this.target.worldRotation);

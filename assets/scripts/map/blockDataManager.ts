@@ -2,7 +2,7 @@ import { _decorator, Component } from 'cc';
 
 import { BlockDataSO, BlockType, TextureData } from './models';
 
-const { ccclass, property } = _decorator;
+const { ccclass, type } = _decorator;
 
 @ccclass('BlockDataManager')
 export class BlockDataManager extends Component {
@@ -11,7 +11,7 @@ export class BlockDataManager extends Component {
     static tileSizeY: number;
     static blockTextureDataDictionary: Map<BlockType, TextureData> = new Map();
 
-    @property(BlockDataSO)
+    @type(BlockDataSO)
     textureData!: BlockDataSO;
 
     start(): void {

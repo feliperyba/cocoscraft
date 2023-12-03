@@ -55,37 +55,27 @@ export class ChunkRenderer extends Component {
     }
 
     private renderMesh(meshData: MeshData): void {
-        const vertices = new Float32Array(
-            meshData.vertices.concat(meshData.waterMesh.vertices).reduce((acc, v) => acc.concat([v.x, v.y, v.z]), [])
+        const vertices = meshData.vertices.concat(meshData.waterMesh.vertices).flatMap(v => [v.x, v.y, v.z]);
+        const triangles = meshData.triangles.concat(
+            meshData.waterMesh?.triangles.map((val: number) => val + meshData.vertices.length) || []
         );
-        const triangles = new Uint16Array(
-            meshData.triangles.concat(meshData.waterMesh.triangles.map((val: number) => val + meshData.vertices.length))
-        );
-        const uvs = new Float32Array(
-            meshData.uv.concat(meshData.waterMesh.uv).reduce((acc, uv) => acc.concat([uv.x, uv.y]), [])
-        );
-
-        const geometry: primitives.IDynamicGeometry = {
+        const uvs = meshData.uv.concat(meshData.waterMesh.uv).flatMap(uv => [uv.x, uv.y]);
+        const geometry: primitives.IGeometry = {
             positions: vertices,
-            indices16: triangles,
+            indices: triangles,
             uvs: uvs,
         };
 
-        this.mesh = utils.MeshUtils.createDynamicMesh(0, geometry);
+        utils.MeshUtils.createMesh(geometry, this.mesh);
         this.meshRender.mesh = this.mesh;
 
-        const collisionVertices = new Float32Array(
-            meshData.collisionVertices.reduce((acc, v) => acc.concat([v.x, v.y, v.z]), [])
-        );
-        const collisionTriangles = new Uint16Array(meshData.collisionTriangles);
-
-        const collisionGeometry: primitives.IDynamicGeometry = {
+        const collisionVertices = meshData.collisionVertices.flatMap(v => [v.x, v.y, v.z]);
+        const collisionGeometry: primitives.IGeometry = {
             positions: collisionVertices,
-            indices16: collisionTriangles,
+            indices: meshData.collisionTriangles,
         };
 
-        const collisionMesh = utils.MeshUtils.createDynamicMesh(0, collisionGeometry);
-        this.meshCollider.mesh = collisionMesh;
+        utils.MeshUtils.createMesh(collisionGeometry, this.meshCollider.mesh);
     }
 
     private showDebugGizmo(): void {
