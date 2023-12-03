@@ -36,7 +36,7 @@ export class BlockHelper {
 
             const isSolid = BlockDataManager.blockTextureDataDictionary.get(neighbourBlockType)?.isSolid;
 
-            if (neighbourBlockType !== BlockType.Empty && !isSolid) {
+            if (neighbourBlockType === BlockType.Empty || !isSolid) {
                 if (blockType === BlockType.Water && neighbourBlockType === BlockType.Air) {
                     meshData.waterMesh = this.getFaceDataIn(direction, x, y, z, meshData.waterMesh, blockType);
                 } else {
@@ -78,7 +78,6 @@ export class BlockHelper {
         };
 
         verticesLookup[direction].forEach((vertex: [number, number, number]) => {
-            console.log('addVertex', vertex, direction, blockType, meshData);
             addVertex(...vertex, meshData);
         });
     }
@@ -87,8 +86,6 @@ export class BlockHelper {
         const uv: Vec2[] = [];
 
         const tilePos = this.texturePosition(direction, blockType);
-
-        console.log('faceUVs', tilePos, direction, blockType);
 
         uv[0] = new Vec2(
             BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.textureOffset,
@@ -114,8 +111,6 @@ export class BlockHelper {
     }
 
     static texturePosition(direction: BlockDirection, blockType: BlockType): Vec2 {
-        console.log('texturePosition', direction, blockType);
-
         const texturePositions = getTexturePositions(blockType);
         return texturePositions[direction] || texturePositions.default;
     }

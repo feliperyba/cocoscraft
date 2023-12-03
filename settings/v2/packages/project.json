@@ -1,6 +1,9 @@
 {
   "general": {
-    "highQuality": true
+    "highQuality": true,
+    "designResolution": {
+      "fitHeight": true
+    }
   },
   "__version__": "1.0.6",
   "fbx": {

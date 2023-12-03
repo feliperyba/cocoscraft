@@ -74,7 +74,7 @@ export class World extends Component {
         }
 
         const blockInChunkCoordinates: Vec3 = Chunk.getBlockInChunkCoordinates(containerChunk, new Vec3(x, y, z));
-        return Chunk.getBlockFromChunkCoordinates(containerChunk, blockInChunkCoordinates);
+        return Chunk.getBlockFromChunkCoordinatesVec3(containerChunk, blockInChunkCoordinates);
     }
 
     private generateVoxels(data: ChunkData): void {

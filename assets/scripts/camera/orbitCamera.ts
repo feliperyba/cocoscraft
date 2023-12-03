@@ -1,6 +1,21 @@
-import { _decorator, Component, EventMouse, Input, input, lerp, Node, Quat, Vec2, Vec3 } from 'cc';
+import {
+    _decorator,
+    Canvas,
+    Component,
+    director,
+    EventMouse,
+    EventTouch,
+    lerp,
+    Node,
+    Quat,
+    SystemEvent,
+    systemEvent,
+    SystemEventType,
+    Touch,
+    Vec2,
+    Vec3,
+} from 'cc';
 import { EDITOR } from 'cc/env';
-
 const { ccclass, property, type } = _decorator;
 
 const tempVec3 = new Vec3();
@@ -8,158 +23,174 @@ const tempVec3_2 = new Vec3();
 const tempQuat = new Quat();
 const DeltaFactor = 1 / 200;
 
+const PositiveForward = new Vec3(0, 0, 1);
+
 @ccclass('OrbitCamera')
 export default class OrbitCamera extends Component {
     @property
     enableTouch = true;
-
     @property
     enableScaleRadius = false;
 
     @property
     autoRotate = false;
-
     @property
     autoRotateSpeed = 90;
 
     @property
     rotateSpeed = 1;
-
     @property
     followSpeed = 1;
-
     @property
     xRotationRange = new Vec2(5, 70);
-
     @type(Node)
-    target: Node | null = null;
+    _target: Node | null = null;
 
+    @property
+    get radius() {
+        return this._targetRadius;
+    }
+    set radius(v) {
+        this._targetRadius = v;
+    }
     @property
     radiusScaleSpeed = 1;
-
     @property
     minRadius = 5;
-
     @property
     maxRadius = 10;
+
+    @type(Node)
+    get target() {
+        return this._target;
+    }
+    set target(v) {
+        this._target = v;
+        this._targetRotation.set(this._startRotation);
+        this._targetCenter.set(v!.worldPosition);
+    }
+
+    @type(Vec3)
+    get targetRotation(): Vec3 {
+        if (!EDITOR) {
+            this._startRotation.set(this._targetRotation);
+        }
+        return this._startRotation;
+    }
+    set targetRotation(v: Vec3) {
+        this._targetRotation.set(v);
+        this._startRotation.set(v);
+    }
 
     @property
     followTargetRotationY = true;
 
-    @property
-    private startRotation = new Vec3();
+    @type(Vec3)
+    private _startRotation = new Vec3();
+
+    private _center = new Vec3();
+    private _targetCenter = new Vec3();
+
+    private _touched = false;
+    private _targetRotation = new Vec3();
+    private _rotation = new Quat();
 
     @property
-    private targetRadius = 10;
+    private _targetRadius = 10;
+    private _radius = 10;
 
-    @type(Node)
-    get targetNode(): Node {
-        return this.target;
-    }
-    set targetNode(v) {
-        this.target = v;
-        this.targetRotationVec3.set(this.startRotation);
-        this.targetCenter.set(v.worldPosition);
-    }
+    start() {
+        const canvas = director.getScene()!.getComponentInChildren(Canvas);
+        if (canvas && canvas.node) {
+            if (this.enableTouch) {
+                canvas.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
+                canvas.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
+                canvas.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this);
+            }
 
-    @property
-    get targetRotationVec3(): Vec3 {
-        if (!EDITOR) {
-            this.startRotation.set(this.targetRotation);
-        }
-        return this.startRotation;
-    }
-    set targetRotationVec3(v: Vec3) {
-        this.targetRotation.set(v);
-        this.startRotation.set(v);
-    }
+            if (this.enableScaleRadius) {
+                canvas.node.on(Node.EventType.MOUSE_WHEEL, this.onMouseWhee, this);
+            }
+        } else {
+            if (this.enableTouch) {
+                systemEvent.on(SystemEventType.TOUCH_START, this.onTouchStart, this);
+                systemEvent.on(SystemEventType.TOUCH_MOVE, this.onTouchMove, this);
+                systemEvent.on(SystemEventType.TOUCH_END, this.onTouchEnd, this);
+            }
 
-    @property
-    get radiusTarget(): number {
-        return this.targetRadius;
-    }
-    set radiusTarget(v) {
-        this.targetRadius = v;
-    }
-
-    private center = new Vec3();
-    private targetCenter = new Vec3();
-    private touched = false;
-    private targetRotation = new Vec3();
-    private rotation = new Quat();
-    private radiusVelocity: number = 0;
-
-    start(): void {
-        input.on(Input.EventType.MOUSE_DOWN, this.onTouchStart, this);
-        input.on(Input.EventType.MOUSE_MOVE, this.onTouchMove, this);
-        input.on(Input.EventType.MOUSE_UP, this.onTouchEnd, this);
-
-        if (this.enableScaleRadius) {
-            input.on(Input.EventType.MOUSE_WHEEL, this.onMouseWhee, this);
+            if (this.enableScaleRadius) {
+                systemEvent.on(SystemEventType.MOUSE_WHEEL, this.onMouseWhee, this);
+            }
         }
 
         this.resetTargetRotation();
-        Quat.fromEuler(this.rotation, this.targetRotationVec3.x, this.targetRotationVec3.y, this.targetRotationVec3.z);
+        Quat.fromEuler(this._rotation, this._targetRotation.x, this._targetRotation.y, this._targetRotation.z);
 
         if (this.target) {
-            this.targetCenter.set(this.target.worldPosition);
-            this.center.set(this.targetCenter);
+            this._targetCenter.set(this.target.worldPosition);
+            this._center.set(this._targetCenter);
         }
 
-        this.radiusTarget = this.targetRadius;
+        this._radius = this.radius;
+
         this.limitRotation();
     }
 
-    resetTargetRotation(): void {
-        let targetRotation = this.targetRotationVec3.set(this.startRotation);
-        if (!this.followTargetRotationY || !this.target) return;
-
-        targetRotation = tempVec3_2.set(targetRotation);
-        Quat.toEuler(tempVec3, this.target.worldRotation);
-        targetRotation.y = lerp(targetRotation.y, targetRotation.y + tempVec3.y, 0.5);
+    resetTargetRotation() {
+        let targetRotation = this._targetRotation.set(this._startRotation);
+        if (this.followTargetRotationY) {
+            targetRotation = tempVec3_2.set(targetRotation);
+            Quat.toEuler(tempVec3, this.target!.worldRotation);
+            targetRotation.y += tempVec3.y;
+        }
     }
 
-    onTouchStart(): void {
-        this.touched = true;
+    onTouchStart() {
+        this._touched = true;
     }
+    onTouchMove(touch?: Touch, event?: EventTouch) {
+        if (!this._touched) return;
+        const delta = touch!.getDelta();
 
-    onTouchMove(touch?: EventMouse): void {
-        if (!this.touched) return;
+        Quat.fromEuler(tempQuat, this._targetRotation.x, this._targetRotation.y, this._targetRotation.z);
 
-        const delta = touch.getDelta();
-
-        Quat.fromEuler(tempQuat, this.targetRotationVec3.x, this.targetRotationVec3.y, this.targetRotationVec3.z);
         Quat.rotateX(tempQuat, tempQuat, -delta.y * DeltaFactor);
         Quat.rotateAround(tempQuat, tempQuat, Vec3.UP, -delta.x * DeltaFactor);
-        Quat.toEuler(this.targetRotationVec3, tempQuat);
+
+        Quat.toEuler(this._targetRotation, tempQuat);
 
         this.limitRotation();
     }
-
-    onTouchEnd(): void {
-        this.touched = false;
+    onTouchEnd() {
+        this._touched = false;
     }
 
-    onMouseWhee(event: EventMouse): void {
+    onMouseWhee(event: EventMouse) {
         const scrollY = event.getScrollY();
-        this.radiusVelocity += this.radiusScaleSpeed * -Math.sign(scrollY) * 0.25;
+        this._targetRadius += this.radiusScaleSpeed * -Math.sign(scrollY);
+        this._targetRadius = Math.min(this.maxRadius, Math.max(this.minRadius, this._targetRadius));
     }
 
-    limitRotation(): void {
-        const rotation = this.targetRotationVec3;
-        rotation.x = Math.max(this.xRotationRange.x, Math.min(rotation.x, this.xRotationRange.y));
+    limitRotation() {
+        const rotation = this._targetRotation;
+
+        if (rotation.x < this.xRotationRange.x) {
+            rotation.x = this.xRotationRange.x;
+        } else if (rotation.x > this.xRotationRange.y) {
+            rotation.x = this.xRotationRange.y;
+        }
+
         rotation.z = 0;
     }
 
-    update(dt: number): void {
-        let targetRotation = this.targetRotationVec3;
-
-        if (this.autoRotate && !this.touched) {
+    update(dt) {
+        let targetRotation = this._targetRotation;
+        if (this.autoRotate && !this._touched) {
             targetRotation.y += this.autoRotateSpeed * dt;
         }
 
         if (this.target) {
-            this.targetCenter.set(this.target.worldPosition);
+            this._targetCenter.set(this.target.worldPosition);
 
             if (this.followTargetRotationY) {
                 targetRotation = tempVec3_2.set(targetRotation);
@@ -169,27 +200,17 @@ export default class OrbitCamera extends Component {
         }
 
         Quat.fromEuler(tempQuat, targetRotation.x, targetRotation.y, targetRotation.z);
-        Quat.slerp(this.rotation, this.rotation, tempQuat, dt * 7 * this.rotateSpeed);
-        Vec3.lerp(this.center, this.center, this.targetCenter, dt * 5 * this.followSpeed);
 
-        // Calculate the difference between the target radius and the current radius
-        const radiusDiff = this.targetRadius - this.radiusTarget;
+        Quat.slerp(this._rotation, this._rotation, tempQuat, dt * 7 * this.rotateSpeed);
+        Vec3.lerp(this._center, this._center, this._targetCenter, dt * 5 * this.followSpeed);
 
-        // Add a fraction of the difference to the velocity
-        this.radiusVelocity += radiusDiff * 0.01;
+        this._radius = lerp(this._radius, this._targetRadius, dt * 5);
 
-        // Apply the velocity to the radius, and reduce the velocity a bit
-        this.radiusTarget += this.radiusVelocity;
-        this.radiusVelocity *= 0.9;
-
-        // Limit the radius within the minRadius and maxRadius range
-        this.radiusTarget = Math.max(this.minRadius, Math.min(this.radiusTarget, this.maxRadius));
-
-        Vec3.transformQuat(tempVec3, Vec3.FORWARD, this.rotation);
-        Vec3.multiplyScalar(tempVec3, tempVec3, this.radiusTarget);
-        tempVec3.add(this.center);
+        Vec3.transformQuat(tempVec3, Vec3.FORWARD, this._rotation);
+        Vec3.multiplyScalar(tempVec3, tempVec3, this._radius);
+        tempVec3.add(this._center);
 
         this.node.position = tempVec3;
-        this.node.lookAt(this.center);
+        this.node.lookAt(this._center);
     }
 }
