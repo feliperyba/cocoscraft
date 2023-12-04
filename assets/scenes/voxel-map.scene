@@ -97,30 +97,30 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 20,
-      "z": 0
+      "x": 500,
+      "y": 60,
+      "z": 500
     },
     "_lrot": {
       "__type__": "cc.Quat",
-      "x": -0.7570227416925128,
-      "y": 0.42732821341761906,
-      "z": 0.4121056716020718,
-      "w": 0.272903063396258
+      "x": -0.5379637496122678,
+      "y": 0.03461972302763111,
+      "z": -0.6244106892194106,
+      "w": 0.5652501836082318
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 2,
-      "y": 2,
-      "z": 2
+      "x": 4,
+      "y": 4,
+      "z": 4
     },
     "_mobility": 0,
     "_layer": 1073741824,
     "_euler": {
       "__type__": "cc.Vec3",
       "x": -122.405,
-      "y": 71.002,
-      "z": -24.965
+      "y": -71.002,
+      "z": -48
     },
     "_id": "c0y6F5f+pAvI805TdmxIjx"
   },
@@ -172,7 +172,7 @@
   {
     "__type__": "cc.StaticLightSettings",
     "_baked": false,
-    "_editorOnly": true,
+    "_editorOnly": false,
     "_castShadow": true
   },
   {
@@ -405,7 +405,7 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "_radiusScale": 0.25,
+    "_radiusScale": 0.5,
     "_angleBiasDegree": 10,
     "_blurSharpness": 3,
     "_aoSaturation": 1,

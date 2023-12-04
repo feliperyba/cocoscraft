@@ -15,7 +15,7 @@
         "_value": true
       },
       "animation": {
-        "_value": true
+        "_value": false
       },
       "skeletal-animation": {
         "_value": true
@@ -33,7 +33,7 @@
         "_value": true
       },
       "particle": {
-        "_value": true
+        "_value": false
       },
       "physics": {
         "_value": true,
@@ -83,19 +83,19 @@
         "_value": false
       },
       "audio": {
-        "_value": true
+        "_value": false
       },
       "video": {
         "_value": true
       },
       "webview": {
-        "_value": true
+        "_value": false
       },
       "tween": {
-        "_value": true
+        "_value": false
       },
       "websocket": {
-        "_value": true
+        "_value": false
       },
       "websocket-server": {
         "_value": false
@@ -129,8 +129,6 @@
     "includeModules": [
       "2d",
       "3d",
-      "animation",
-      "audio",
       "base",
       "custom-pipeline",
       "debug-renderer",
@@ -140,17 +138,13 @@
       "light-probe",
       "marionette",
       "occlusion-query",
-      "particle",
       "physics-physx",
       "primitive",
       "profiler",
       "skeletal-animation",
       "terrain",
-      "tween",
       "ui",
-      "video",
-      "websocket",
-      "webview"
+      "video"
     ],
     "noDeprecatedFeatures": {
       "value": false,
