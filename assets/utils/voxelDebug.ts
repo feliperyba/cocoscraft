@@ -3,6 +3,7 @@ import { _decorator, Component, Node } from 'cc';
 import { World } from '../scripts/map/world';
 import { eGroup } from './easyMenu/src/eGroup';
 import { eMenu } from './easyMenu/src/eMenu';
+import { GameManager } from './gameManager';
 const { ccclass, property, type } = _decorator;
 
 @ccclass('VoxelDebug')
@@ -15,6 +16,9 @@ export class VoxelDebug extends Component {
 
     @property(Node)
     postReference!: Node;
+
+    @type(GameManager)
+    gameManager!: GameManager;
 
     group: eGroup;
 
@@ -44,7 +48,9 @@ export class VoxelDebug extends Component {
         this.group.addToggle('Post Processing', value => {
             this.postReference.active = value;
         });
-    }
 
-    start(): void {}
+        this.group.addItem('Spawn Player', () => {
+            this.gameManager.spawnPlayer();
+        });
+    }
 }

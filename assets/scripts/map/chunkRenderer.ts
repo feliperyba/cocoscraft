@@ -70,7 +70,7 @@ export class ChunkRenderer extends Component {
             uvs: uvs,
         };
 
-        utils.MeshUtils.createMesh(geometry, this.mesh);
+        this.mesh = utils.MeshUtils.createMesh(geometry, this.mesh);
         this.meshRender.mesh = this.mesh;
 
         const collisionVertices = meshData.collisionVertices.flatMap(v => [v.x, v.y, v.z]);
@@ -79,7 +79,7 @@ export class ChunkRenderer extends Component {
             indices: meshData.collisionTriangles,
         };
 
-        utils.MeshUtils.createMesh(collisionGeometry, this.meshCollider.mesh);
+        this.meshCollider.mesh = utils.MeshUtils.createMesh(collisionGeometry, this.meshCollider.mesh);
     }
 
     private showDebugGizmo(): void {
