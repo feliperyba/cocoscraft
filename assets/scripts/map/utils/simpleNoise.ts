@@ -19,9 +19,7 @@ const grad3 = new Float32Array([
     1, 1, 0, -1, 1, 0, 1, -1, 0, -1, -1, 0, 1, 0, 1, -1, 0, 1, 1, 0, -1, -1, 0, -1, 0, 1, 1, 0, -1, 1, 0, -1, -1,
 ]);
 
-// Define noise function
 function noise(x: number, y: number): number {
-    // Find unit grid cell containing point
     let X = Math.floor(x),
         Y = Math.floor(y);
     // Get relative xy coordinates of point within that cell
@@ -68,7 +66,7 @@ export const simplePerlinNoise = (x: number, z: number): number => {
     let total = 0;
     let frequency = 1;
     let amplitude = 1;
-    let amplitudeSum = 0; // Used for normalizing result to 0.0 - 1.0 range
+    let amplitudeSum = 0;
     for (let i = 0; i < settings.octaves; i++) {
         total += noise(x * frequency, z * frequency) * amplitude;
 

@@ -58,6 +58,7 @@ export class World extends Component {
             chunkRenderer.initChunk(data);
             chunkRenderer.updateChunkWithData(meshData);
 
+            // this is for later when using dynamic meshes
             // chunkRenderer.meshRender.onGeometryChanged();
             // chunkRenderer.meshRenderWater.onGeometryChanged();
 
