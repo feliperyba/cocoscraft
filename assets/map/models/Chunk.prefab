@@ -261,7 +261,7 @@
       "z": 0
     },
     "_mesh": null,
-    "_convex": false,
+    "_convex": true,
     "_id": ""
   },
   {

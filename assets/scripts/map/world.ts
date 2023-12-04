@@ -1,5 +1,4 @@
 import { _decorator, CCFloat, Component, instantiate, Prefab, Vec3 } from 'cc';
-import { director } from 'cc';
 
 import { Chunk } from './chunk';
 import { ChunkData } from './chunkData';
@@ -60,7 +59,7 @@ export class World extends Component {
             chunkRenderer.updateChunkWithData(meshData);
 
             // this is for later when using dynamic meshes
-            chunkRenderer.meshRender.onGeometryChanged();
+            // chunkRenderer.meshRender.onGeometryChanged();
             // chunkRenderer.meshRenderWater.onGeometryChanged();
 
             this.node.addChild(chunkObject);

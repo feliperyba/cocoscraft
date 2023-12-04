@@ -373,7 +373,7 @@
     "__prefab": null,
     "_enableAlphaMask": false,
     "_useHdrIlluminance": false,
-    "_threshold": 0.95,
+    "_threshold": 0.9,
     "_iterations": 4,
     "_intensity": 1.2,
     "_id": "3bbUQ41r5MAopJReqtUkWs"
@@ -388,7 +388,7 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "_contribute": 0.4,
+    "_contribute": 0.2,
     "_colorGradingMap": {
       "__uuid__": "8451f3da-dd72-422a-9e0b-e5cb756a8ca7@6c48a",
       "__expectedType__": "cc.Texture2D"
@@ -405,7 +405,7 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "_radiusScale": 0.2,
+    "_radiusScale": 0.25,
     "_angleBiasDegree": 10,
     "_blurSharpness": 3,
     "_aoSaturation": 1,
@@ -707,7 +707,7 @@
     "_priority": 1073741824,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 453.04904051172707,
+    "_orthoHeight": 388.42767295597486,
     "_near": 1,
     "_far": 2000,
     "_color": {
