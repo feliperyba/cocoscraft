@@ -73,13 +73,50 @@ export class BlockHelper {
     ): void {
         const generatesCollider = BlockDataManager.blockTextureDataDictionary.get(blockType).generatesCollider;
 
-        const addVertex = (dx: number, dy: number, dz: number, md: MeshData): void => {
-            md.addVertex(new Vec3(x + dx, y + dy, z + dz), generatesCollider);
+        const addVertex = (dx: number, dy: number, dz: number): void => {
+            meshData.addVertex(new Vec3(x + dx, y + dy, z + dz), generatesCollider);
         };
 
-        verticesLookup[direction].forEach((vertex: [number, number, number]) => {
-            addVertex(...vertex, meshData);
-        });
+        switch (direction) {
+            case BlockDirection.Back:
+                addVertex(-0.5, -0.5, -0.5);
+                addVertex(-0.5, 0.5, -0.5);
+                addVertex(0.5, 0.5, -0.5);
+                addVertex(0.5, -0.5, -0.5);
+                break;
+            case BlockDirection.Forward:
+                addVertex(0.5, -0.5, 0.5);
+                addVertex(0.5, 0.5, 0.5);
+                addVertex(-0.5, 0.5, 0.5);
+                addVertex(-0.5, -0.5, 0.5);
+                break;
+            case BlockDirection.Left:
+                addVertex(-0.5, -0.5, 0.5);
+                addVertex(-0.5, 0.5, 0.5);
+                addVertex(-0.5, 0.5, -0.5);
+                addVertex(-0.5, -0.5, -0.5);
+                break;
+            case BlockDirection.Right:
+                addVertex(0.5, -0.5, -0.5);
+                addVertex(0.5, 0.5, -0.5);
+                addVertex(0.5, 0.5, 0.5);
+                addVertex(0.5, -0.5, 0.5);
+                break;
+            case BlockDirection.Down:
+                addVertex(-0.5, -0.5, -0.5);
+                addVertex(0.5, -0.5, -0.5);
+                addVertex(0.5, -0.5, 0.5);
+                addVertex(-0.5, -0.5, 0.5);
+                break;
+            case BlockDirection.Up:
+                addVertex(-0.5, 0.5, 0.5);
+                addVertex(0.5, 0.5, 0.5);
+                addVertex(0.5, 0.5, -0.5);
+                addVertex(-0.5, 0.5, -0.5);
+                break;
+            default:
+                break;
+        }
     }
 
     static faceUVs(direction: BlockDirection, blockType: BlockType): Vec2[] {
@@ -87,25 +124,30 @@ export class BlockHelper {
 
         const tilePos = this.texturePosition(direction, blockType);
 
-        uv[0] = new Vec2(
-            BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.textureOffset,
-            BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.textureOffset
-        );
+        const originalUV = [
+            new Vec2(
+                BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.textureOffset,
+                BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.textureOffset
+            ),
+            new Vec2(
+                BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.tileSizeX - BlockDataManager.textureOffset,
+                BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.textureOffset
+            ),
+            new Vec2(
+                BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.tileSizeX - BlockDataManager.textureOffset,
+                BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.tileSizeY - BlockDataManager.textureOffset
+            ),
+            new Vec2(
+                BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.textureOffset,
+                BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.tileSizeY - BlockDataManager.textureOffset
+            ),
+        ];
 
-        uv[1] = new Vec2(
-            BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.tileSizeX - BlockDataManager.textureOffset,
-            BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.textureOffset
-        );
-
-        uv[2] = new Vec2(
-            BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.tileSizeX - BlockDataManager.textureOffset,
-            BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.tileSizeY - BlockDataManager.textureOffset
-        );
-
-        uv[3] = new Vec2(
-            BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.textureOffset,
-            BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.tileSizeY - BlockDataManager.textureOffset
-        );
+        // Apply a 90 degree rotation to the UVs by shifting the coordinates to the right by one position
+        uv[0] = originalUV[3];
+        uv[1] = originalUV[0];
+        uv[2] = originalUV[1];
+        uv[3] = originalUV[2];
 
         return uv;
     }
@@ -128,43 +170,4 @@ const getTexturePositions = (
         [BlockDirection.Down]: BlockDataManager.blockTextureDataDictionary.get(blockType).down,
         default: BlockDataManager.blockTextureDataDictionary.get(blockType).side,
     };
-};
-
-const verticesLookup = {
-    [BlockDirection.Back]: [
-        [-0.5, 0.5, -0.5],
-        [0.5, 0.5, -0.5],
-        [0.5, -0.5, -0.5],
-        [-0.5, -0.5, -0.5],
-    ],
-    [BlockDirection.Forward]: [
-        [0.5, -0.5, 0.5],
-        [-0.5, -0.5, 0.5],
-        [-0.5, 0.5, 0.5],
-        [0.5, 0.5, 0.5],
-    ],
-    [BlockDirection.Right]: [
-        [0.5, 0.5, 0.5],
-        [0.5, -0.5, 0.5],
-        [0.5, -0.5, -0.5],
-        [0.5, 0.5, -0.5],
-    ],
-    [BlockDirection.Left]: [
-        [-0.5, 0.5, 0.5],
-        [-0.5, 0.5, -0.5],
-        [-0.5, -0.5, -0.5],
-        [-0.5, -0.5, 0.5],
-    ],
-    [BlockDirection.Down]: [
-        [-0.5, -0.5, -0.5],
-        [0.5, -0.5, -0.5],
-        [0.5, -0.5, 0.5],
-        [-0.5, -0.5, 0.5],
-    ],
-    [BlockDirection.Up]: [
-        [-0.5, 0.5, 0.5],
-        [0.5, 0.5, 0.5],
-        [0.5, 0.5, -0.5],
-        [-0.5, 0.5, -0.5],
-    ],
 };

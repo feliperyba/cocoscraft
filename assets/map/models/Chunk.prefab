@@ -43,7 +43,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0,
+      "y": 0.067,
       "z": 0
     },
     "_lrot": {
@@ -164,15 +164,15 @@
       "z": 0,
       "w": 0
     },
-    "_bakeable": true,
+    "_bakeable": false,
     "_castShadow": true,
     "_receiveShadow": true,
     "_recieveShadow": true,
-    "_lightmapSize": 64,
-    "_useLightProbe": true,
-    "_bakeToLightProbe": true,
-    "_reflectionProbeType": 2,
-    "_bakeToReflectionProbe": true
+    "_lightmapSize": 1024,
+    "_useLightProbe": false,
+    "_bakeToLightProbe": false,
+    "_reflectionProbeType": 0,
+    "_bakeToReflectionProbe": false
   },
   {
     "__type__": "cc.PrefabInfo",
@@ -281,7 +281,7 @@
       "__id__": 11
     },
     "_group": 1,
-    "_type": 1,
+    "_type": 2,
     "_mass": 0.0001,
     "_allowSleep": true,
     "_linearDamping": 0.1,

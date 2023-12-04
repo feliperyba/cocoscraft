@@ -98,15 +98,15 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 30,
+      "y": 20,
       "z": 0
     },
     "_lrot": {
       "__type__": "cc.Quat",
-      "x": -0.8309960822508164,
-      "y": 0.3635505236091675,
-      "z": 0.3964611950522472,
-      "w": 0.14175700647600645
+      "x": -0.7570227416925128,
+      "y": 0.42732821341761906,
+      "z": 0.4121056716020718,
+      "w": 0.272903063396258
     },
     "_lscale": {
       "__type__": "cc.Vec3",
@@ -118,9 +118,9 @@
     "_layer": 1073741824,
     "_euler": {
       "__type__": "cc.Vec3",
-      "x": -143.011,
-      "y": 61.062,
-      "z": -29.46
+      "x": -122.405,
+      "y": 71.002,
+      "z": -24.965
     },
     "_id": "c0y6F5f+pAvI805TdmxIjx"
   },
@@ -146,9 +146,9 @@
     "_staticSettings": {
       "__id__": 4
     },
-    "_visibility": -325058561,
-    "_illuminanceHDR": 63820,
-    "_illuminance": 63820,
+    "_visibility": 4294967295,
+    "_illuminanceHDR": 65000,
+    "_illuminance": 65000,
     "_illuminanceLDR": 1.6927083333333335,
     "_shadowEnabled": true,
     "_shadowPcf": 2,
@@ -172,7 +172,7 @@
   {
     "__type__": "cc.StaticLightSettings",
     "_baked": false,
-    "_editorOnly": false,
+    "_editorOnly": true,
     "_castShadow": true
   },
   {
@@ -707,7 +707,7 @@
     "_priority": 1073741824,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 388.42767295597486,
+    "_orthoHeight": 460.9110629067245,
     "_near": 1,
     "_far": 2000,
     "_color": {
