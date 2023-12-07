@@ -36,18 +36,15 @@ export class BlockHelper {
 
             const isSolid = BlockDataManager.blockTextureDataDictionary.get(neighbourBlockType)?.isSolid;
 
-            if (neighbourBlockType === BlockType.Empty || !isSolid) {
-                if (blockType === BlockType.Water && neighbourBlockType === BlockType.Air) {
-                    meshData.waterMesh = this.getFaceDataIn(direction, x, y, z, meshData.waterMesh, blockType);
-                } else {
-                    meshData = this.getFaceDataIn(direction, x, y, z, meshData, blockType);
-                }
+            if (blockType === BlockType.Water && (neighbourBlockType === BlockType.Air || isSolid)) {
+                meshData.waterMesh = this.getFaceDataIn(direction, x, y, z, meshData.waterMesh, blockType);
+            } else if (blockType !== BlockType.Water) {
+                meshData = this.getFaceDataIn(direction, x, y, z, meshData, blockType);
             }
         }
 
         return meshData;
     }
-
     static getFaceDataIn(
         direction: BlockDirection,
         x: number,

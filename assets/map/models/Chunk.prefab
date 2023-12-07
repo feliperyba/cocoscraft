@@ -444,8 +444,8 @@
       "__id__": 18
     },
     "_mesh": null,
-    "_shadowCastingMode": 1,
-    "_shadowReceivingMode": 1,
+    "_shadowCastingMode": 0,
+    "_shadowReceivingMode": 0,
     "_shadowBias": 0,
     "_shadowNormalBias": 0,
     "_reflectionProbeId": -1,
@@ -470,13 +470,13 @@
       "w": 0
     },
     "_bakeable": true,
-    "_castShadow": true,
+    "_castShadow": false,
     "_receiveShadow": true,
     "_recieveShadow": true,
     "_lightmapSize": 64,
     "_useLightProbe": true,
     "_bakeToLightProbe": true,
-    "_reflectionProbeType": 4,
+    "_reflectionProbeType": 2,
     "_bakeToReflectionProbe": true
   },
   {

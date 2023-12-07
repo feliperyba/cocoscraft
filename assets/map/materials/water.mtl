@@ -70,12 +70,16 @@
       "mainColor": {
         "__type__": "cc.Color",
         "r": 0,
-        "g": 228,
-        "b": 248,
-        "a": 241
+        "g": 234,
+        "b": 255,
+        "a": 138
       },
-      "occlusion": 0.347,
-      "roughness": 0.51,
+      "roughness": 0.778,
+      "specularIntensity": 0.876,
+      "mainTexture": {
+        "__uuid__": "72c32ca0-32fa-4d08-aca1-dd842b67ea6e@6c48a",
+        "__expectedType__": "cc.Texture2D"
+      },
       "normalMap": {
         "__uuid__": "495fb923-713e-4b0d-908b-557c723b8aed@6c48a",
         "__expectedType__": "cc.Texture2D"

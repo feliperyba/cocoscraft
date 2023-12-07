@@ -101,7 +101,7 @@ export class World extends Component {
     }
 
     private getVoxelType(y: number, groundPosition: number): BlockType {
-        if (y > groundPosition) {
+        if (y > 0 && y > groundPosition) {
             return y < this.waterThreshold ? BlockType.Water : BlockType.Air;
         }
 

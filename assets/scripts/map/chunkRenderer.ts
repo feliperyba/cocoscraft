@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, Graphics, Mesh, MeshRenderer, Node, physics, primitives, utils, Vec3 } from 'cc';
+import { _decorator, Color, Component, Graphics, MeshRenderer, Node, physics, primitives, utils, Vec3 } from 'cc';
 
 import { Chunk } from './chunk';
 import { ChunkData } from './chunkData';
@@ -23,8 +23,6 @@ export class ChunkRenderer extends Component {
     @type(MeshRenderer)
     meshRenderWater!: MeshRenderer;
 
-    mesh = new Mesh();
-    waterMesh = new Mesh();
     chunkData!: ChunkData;
 
     start(): void {
@@ -59,19 +57,29 @@ export class ChunkRenderer extends Component {
     }
 
     private renderMesh(meshData: MeshData): void {
-        const vertices = meshData.vertices.concat(meshData.waterMesh?.vertices || []).flatMap(v => [v.x, v.y, v.z]);
-        const triangles = meshData.triangles.concat(
-            meshData.waterMesh?.triangles.map((val: number) => val + meshData.vertices.length) || []
-        );
-        const uvs = meshData.uv.concat(meshData.waterMesh?.uv || []).flatMap(uv => [uv.x, uv.y]);
-        const geometry: primitives.IGeometry = {
-            positions: vertices,
-            indices: triangles,
-            uvs: uvs,
+        const landVertices = meshData.vertices.flatMap(v => [v.x, v.y, v.z]);
+        const landTriangles = meshData.triangles;
+        const landUvs = meshData.uv.flatMap(uv => [uv.x, uv.y]);
+        const landGeometry: primitives.IGeometry = {
+            positions: landVertices,
+            indices: landTriangles,
+            uvs: landUvs,
         };
 
-        this.mesh = utils.MeshUtils.createMesh(geometry, this.mesh);
-        this.meshRender.mesh = this.mesh;
+        this.meshRender.mesh = utils.MeshUtils.createMesh(landGeometry);
+
+        if (meshData.waterMesh) {
+            const waterVertices = meshData.waterMesh.vertices.flatMap(v => [v.x, v.y, v.z]);
+            const waterTriangles = meshData.waterMesh.triangles;
+            const waterUvs = meshData.waterMesh.uv.flatMap(uv => [uv.x, uv.y]);
+            const waterGeometry: primitives.IGeometry = {
+                positions: waterVertices,
+                indices: waterTriangles,
+                uvs: waterUvs,
+            };
+
+            this.meshRenderWater.mesh = utils.MeshUtils.createMesh(waterGeometry);
+        }
 
         const collisionVertices = meshData.collisionVertices.flatMap(v => [v.x, v.y, v.z]);
         const collisionGeometry: primitives.IGeometry = {
