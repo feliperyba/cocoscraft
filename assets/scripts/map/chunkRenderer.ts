@@ -92,8 +92,8 @@ export class ChunkRenderer extends Component {
             indices: meshData.collisionTriangles,
         };
 
+        this.meshCollider.convex = false;
         this.meshCollider.mesh = utils.MeshUtils.createMesh(collisionGeometry);
-        this.meshCollider.convex = true;
 
         if (this.showGizmo && this.chunkData) this.showDebugGizmo();
     }
@@ -102,13 +102,11 @@ export class ChunkRenderer extends Component {
         const meshdata = Chunk.getMeshData(this.chunkData);
         const vertices = meshdata.collisionVertices;
         const numVertices = vertices.length;
-        const chunkPos = this.node.position;
 
         // Calculate the number of Line components needed
         // Adjusted this value, if Line component has many positions it will not render. 100 looks a threshold.
         const numComponents = Math.ceil(numVertices / 100);
 
-        // Create the Line components
         for (let i = 0; i < numComponents; i++) {
             let lineNode = this.node.getChildByName(`Line${i}`);
             if (!lineNode) {
@@ -121,7 +119,6 @@ export class ChunkRenderer extends Component {
                 line = lineNode.addComponent(Line);
             }
 
-            line.worldSpace = true;
             line.color = new GradientRange();
             line.color.color = Color.RED;
             line.width = new CurveRange();
@@ -136,16 +133,9 @@ export class ChunkRenderer extends Component {
             const start = i * 100;
             const end = Math.min((i + 1) * 100, numVertices);
 
-            // Loop through the vertices
             for (let j = start; j < end; j++) {
-                // Get the vertex for this position
                 const v = vertices[j];
-
-                // Convert the vertex to world space
-                const worldV = v.add(chunkPos);
-
-                // Add the vertex to the line's positions
-                line.positions.push(worldV);
+                line.positions.push(v);
             }
         }
     }

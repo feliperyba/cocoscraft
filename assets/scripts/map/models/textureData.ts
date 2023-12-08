@@ -22,15 +22,15 @@ export class TextureData {
     isPrefab: boolean = false;
 
     @property
-    isSolid: boolean = true;
+    isSolid: boolean = false;
 
     @property
-    generatesCollider: boolean = true;
+    generatesCollider: boolean = false;
 }
 
 // this is quite an strange way to type the array, but it works on the editor
 @ccclass('TextureDataWrapper')
 export class TextureDataWrapper extends Component {
     @type(TextureData)
-    textureData: TextureData;
+    textureData!: TextureData;
 }
