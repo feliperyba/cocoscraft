@@ -460,20 +460,20 @@
       "x": 5,
       "y": 70
     },
-    "_target": {
+    "target": {
       "__id__": 16
     },
     "radiusScaleSpeed": 1,
     "minRadius": 5,
     "maxRadius": 100,
     "followTargetRotationY": false,
-    "_startRotation": {
+    "startRotation": {
       "__type__": "cc.Vec3",
       "x": 0,
       "y": 0,
       "z": 0
     },
-    "_targetRadius": 10,
+    "targetRadius": 10,
     "_id": "9cu8qVR5pJZoRgx4glpatB"
   },
   {
@@ -707,7 +707,7 @@
     "_priority": 1073741824,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 460.9110629067245,
+    "_orthoHeight": 360,
     "_near": 1,
     "_far": 2000,
     "_color": {

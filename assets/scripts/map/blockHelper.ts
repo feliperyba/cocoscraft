@@ -34,17 +34,20 @@ export class BlockHelper {
             const neighbourBlockCoordinates = new Vec3(x, y, z).add(getVector(direction));
             const neighbourBlockType = Chunk.getBlockFromChunkCoordinatesVec3(chunk, neighbourBlockCoordinates);
 
-            const isSolid = BlockDataManager.blockTextureDataDictionary.get(neighbourBlockType)?.isSolid;
+            const isNeighbourSolid = BlockDataManager.blockTextureDataDictionary.get(neighbourBlockType)?.isSolid;
 
-            if (blockType === BlockType.Water && (neighbourBlockType === BlockType.Air || isSolid)) {
+            if (blockType === BlockType.Water && (neighbourBlockType === BlockType.Air || isNeighbourSolid)) {
                 meshData.waterMesh = this.getFaceDataIn(direction, x, y, z, meshData.waterMesh, blockType);
-            } else if (blockType !== BlockType.Water) {
+            }
+
+            if (blockType !== BlockType.Water && !isNeighbourSolid && neighbourBlockType !== BlockType.Empty) {
                 meshData = this.getFaceDataIn(direction, x, y, z, meshData, blockType);
             }
         }
 
         return meshData;
     }
+
     static getFaceDataIn(
         direction: BlockDirection,
         x: number,
