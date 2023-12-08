@@ -1,4 +1,16 @@
-import { _decorator, Color, Component, Graphics, MeshRenderer, Node, physics, primitives, utils, Vec3 } from 'cc';
+import {
+    _decorator,
+    Color,
+    Component,
+    CurveRange,
+    GradientRange,
+    Line,
+    MeshRenderer,
+    Node,
+    physics,
+    primitives,
+    utils,
+} from 'cc';
 
 import { Chunk } from './chunk';
 import { ChunkData } from './chunkData';
@@ -25,16 +37,9 @@ export class ChunkRenderer extends Component {
 
     chunkData!: ChunkData;
 
-    start(): void {
-        const graphics = this.debugNode.getComponent(Graphics);
-        if (!graphics) {
-            this.debugNode.addComponent(Graphics);
-        }
-    }
+    start(): void {}
 
-    update(): void {
-        if (this.showGizmo && this.chunkData) this.showDebugGizmo();
-    }
+    update(): void {}
 
     setIsModified(value: boolean): void {
         this.chunkData.isModified = value;
@@ -58,11 +63,11 @@ export class ChunkRenderer extends Component {
 
     private renderMesh(meshData: MeshData): void {
         const landVertices = meshData.vertices.flatMap(v => [v.x, v.y, v.z]);
-        const landTriangles = meshData.triangles;
         const landUvs = meshData.uv.flatMap(uv => [uv.x, uv.y]);
+
         const landGeometry: primitives.IGeometry = {
             positions: landVertices,
-            indices: landTriangles,
+            indices: meshData.triangles,
             uvs: landUvs,
         };
 
@@ -70,11 +75,11 @@ export class ChunkRenderer extends Component {
 
         if (meshData.waterMesh) {
             const waterVertices = meshData.waterMesh.vertices.flatMap(v => [v.x, v.y, v.z]);
-            const waterTriangles = meshData.waterMesh.triangles;
             const waterUvs = meshData.waterMesh.uv.flatMap(uv => [uv.x, uv.y]);
+
             const waterGeometry: primitives.IGeometry = {
                 positions: waterVertices,
-                indices: waterTriangles,
+                indices: meshData.waterMesh.triangles,
                 uvs: waterUvs,
             };
 
@@ -87,26 +92,61 @@ export class ChunkRenderer extends Component {
             indices: meshData.collisionTriangles,
         };
 
-        this.meshCollider.mesh = utils.MeshUtils.createMesh(collisionGeometry, this.meshCollider.mesh);
+        this.meshCollider.mesh = utils.MeshUtils.createMesh(collisionGeometry);
+        this.meshCollider.convex = true;
+
+        if (this.showGizmo && this.chunkData) this.showDebugGizmo();
     }
 
     private showDebugGizmo(): void {
-        const graphics = this.debugNode.getComponent(Graphics);
-        graphics.clear();
+        const meshdata = Chunk.getMeshData(this.chunkData);
+        const vertices = meshdata.collisionVertices;
+        const numVertices = vertices.length;
+        const chunkPos = this.node.position;
 
-        const position = this.node.position
-            .clone()
-            .add(new Vec3(this.chunkData.chunkSize / 2, this.chunkData.chunkHeight / 2, this.chunkData.chunkSize / 2));
-        const size = new Vec3(this.chunkData.chunkSize, this.chunkData.chunkHeight, this.chunkData.chunkSize);
+        // Calculate the number of Line components needed
+        // Adjusted this value, if Line component has many positions it will not render. 100 looks a threshold.
+        const numComponents = Math.ceil(numVertices / 100);
 
-        // Draw the cube
-        graphics.lineWidth = 2.5;
-        graphics.strokeColor = Color.RED;
-        graphics.moveTo(position.x - size.x / 2, position.y - size.y / 2);
-        graphics.lineTo(position.x + size.x / 2, position.y - size.y / 2);
-        graphics.lineTo(position.x + size.x / 2, position.y + size.y / 2);
-        graphics.lineTo(position.x - size.x / 2, position.y + size.y / 2);
-        graphics.close();
-        graphics.stroke();
+        // Create the Line components
+        for (let i = 0; i < numComponents; i++) {
+            let lineNode = this.node.getChildByName(`Line${i}`);
+            if (!lineNode) {
+                lineNode = new Node(`Line${i}`);
+                this.debugNode.addChild(lineNode);
+            }
+
+            let line = lineNode.getComponent(Line);
+            if (!line) {
+                line = lineNode.addComponent(Line);
+            }
+
+            line.worldSpace = true;
+            line.color = new GradientRange();
+            line.color.color = Color.RED;
+            line.width = new CurveRange();
+            line.width.constant = 0.5;
+
+            line.visibility = 1;
+            line.enabled = true;
+
+            line.positions = [];
+
+            // Calculate the start and end indices for this component
+            const start = i * 100;
+            const end = Math.min((i + 1) * 100, numVertices);
+
+            // Loop through the vertices
+            for (let j = start; j < end; j++) {
+                // Get the vertex for this position
+                const v = vertices[j];
+
+                // Convert the vertex to world space
+                const worldV = v.add(chunkPos);
+
+                // Add the vertex to the line's positions
+                line.positions.push(worldV);
+            }
+        }
     }
 }

@@ -36,8 +36,8 @@ export class BlockHelper {
 
             const isNeighbourSolid = BlockDataManager.blockTextureDataDictionary.get(neighbourBlockType)?.isSolid;
 
-            if (blockType === BlockType.Water && (neighbourBlockType === BlockType.Air || isNeighbourSolid)) {
-                meshData.waterMesh = this.getFaceDataIn(direction, x, y, z, meshData.waterMesh, blockType);
+            if (blockType === BlockType.Water && neighbourBlockType === BlockType.Air) {
+                meshData.waterMesh = this.getFaceDataIn(direction, x, y, z, meshData.waterMesh!, blockType);
             }
 
             if (blockType !== BlockType.Water && !isNeighbourSolid && neighbourBlockType !== BlockType.Empty) {
@@ -57,7 +57,9 @@ export class BlockHelper {
         blockType: BlockType
     ): MeshData {
         this.getFaceVertices(direction, x, y, z, meshData, blockType);
-        meshData.addQuadTriangle(BlockDataManager.blockTextureDataDictionary.get(blockType).generatesCollider);
+        meshData.addQuadTriangle(
+            BlockDataManager.blockTextureDataDictionary.get(blockType)?.generatesCollider ?? false
+        );
         meshData.uv.push(...this.faceUVs(direction, blockType));
 
         return meshData;
@@ -71,7 +73,8 @@ export class BlockHelper {
         meshData: MeshData,
         blockType: BlockType
     ): void {
-        const generatesCollider = BlockDataManager.blockTextureDataDictionary.get(blockType).generatesCollider;
+        const generatesCollider =
+            BlockDataManager.blockTextureDataDictionary.get(blockType)?.generatesCollider ?? false;
 
         const addVertex = (dx: number, dy: number, dz: number): void => {
             meshData.addVertex(new Vec3(x + dx, y + dy, z + dz), generatesCollider);
@@ -120,34 +123,26 @@ export class BlockHelper {
     }
 
     static faceUVs(direction: BlockDirection, blockType: BlockType): Vec2[] {
-        const uv: Vec2[] = [];
-
         const tilePos = this.texturePosition(direction, blockType);
 
-        const originalUV = [
+        const uv = [
             new Vec2(
                 BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.textureOffset,
-                BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.textureOffset
-            ),
-            new Vec2(
-                BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.tileSizeX - BlockDataManager.textureOffset,
-                BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.textureOffset
-            ),
-            new Vec2(
-                BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.tileSizeX - BlockDataManager.textureOffset,
                 BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.tileSizeY - BlockDataManager.textureOffset
             ),
             new Vec2(
                 BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.textureOffset,
+                BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.textureOffset
+            ),
+            new Vec2(
+                BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.tileSizeX - BlockDataManager.textureOffset,
+                BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.textureOffset
+            ),
+            new Vec2(
+                BlockDataManager.tileSizeX * tilePos.x + BlockDataManager.tileSizeX - BlockDataManager.textureOffset,
                 BlockDataManager.tileSizeY * tilePos.y + BlockDataManager.tileSizeY - BlockDataManager.textureOffset
             ),
         ];
-
-        // Apply a 90 degree rotation to the UVs by shifting the coordinates to the right by one position
-        uv[0] = originalUV[3];
-        uv[1] = originalUV[0];
-        uv[2] = originalUV[1];
-        uv[3] = originalUV[2];
 
         return uv;
     }
@@ -161,13 +156,11 @@ export class BlockHelper {
 const getTexturePositions = (
     blockType: BlockType
 ): {
-    [BlockDirection.Up]: Vec2;
-    [BlockDirection.Down]: Vec2;
-    default: Vec2;
-} => {
+    [key in BlockDirection]?: Vec2;
+} & { default: Vec2 } => {
     return {
-        [BlockDirection.Up]: BlockDataManager.blockTextureDataDictionary.get(blockType).up,
-        [BlockDirection.Down]: BlockDataManager.blockTextureDataDictionary.get(blockType).down,
-        default: BlockDataManager.blockTextureDataDictionary.get(blockType).side,
+        [BlockDirection.Up]: BlockDataManager.blockTextureDataDictionary.get(blockType)!.up,
+        [BlockDirection.Down]: BlockDataManager.blockTextureDataDictionary.get(blockType)!.down,
+        default: BlockDataManager.blockTextureDataDictionary.get(blockType)!.side,
     };
 };
