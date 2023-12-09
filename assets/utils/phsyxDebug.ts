@@ -13,7 +13,7 @@ export class PhysxDebug extends Component {
     @property(Node)
     postReference!: Node;
 
-    group: eGroup;
+    group!: eGroup;
 
     onLoad(): void {
         this.group = this.easyMenu.addGroup('Debug');

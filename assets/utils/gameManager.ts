@@ -25,6 +25,6 @@ export class GameManager extends Component {
         player.setPosition(this.spawnPoint.position);
         this.cameraReference.target = player;
 
-        director.getScene().addChild(player);
+        director.getScene()!.addChild(player);
     }
 }

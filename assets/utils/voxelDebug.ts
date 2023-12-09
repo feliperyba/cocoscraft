@@ -20,7 +20,7 @@ export class VoxelDebug extends Component {
     @type(GameManager)
     gameManager!: GameManager;
 
-    group: eGroup;
+    group!: eGroup;
 
     onLoad(): void {
         this.group = this.easyMenu.addGroup('Debug');
@@ -53,7 +53,7 @@ export class VoxelDebug extends Component {
             this.worldReferece.noiseScale = Number(value);
         });
 
-        this.group.addToggle('Post Processing', value => {
+        this.group.addToggle('Post Processing', (value = false) => {
             this.postReference.active = value;
         });
 

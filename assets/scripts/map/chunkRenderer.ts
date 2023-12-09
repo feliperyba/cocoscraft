@@ -91,9 +91,8 @@ export class ChunkRenderer extends Component {
             positions: collisionVertices,
             indices: meshData.collisionTriangles,
         };
-
-        this.meshCollider.convex = false;
         this.meshCollider.mesh = utils.MeshUtils.createMesh(collisionGeometry);
+
 
         if (this.showGizmo && this.chunkData) this.showDebugGizmo();
     }
