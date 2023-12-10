@@ -1,14 +1,20 @@
-import { _decorator, CCFloat, Component, instantiate, Prefab, Vec3 } from 'cc';
+import { _decorator, Component, instantiate, Prefab, Vec2, Vec3 } from 'cc';
 
 import { Chunk } from './chunk';
 import { ChunkData } from './chunkData';
 import { ChunkRenderer } from './chunkRenderer';
 import { BlockType } from './models';
-import { simplePerlinNoise } from './utils';
-const { ccclass, property } = _decorator;
+import { TerrainGenerator } from './terrainGenerator';
+const { ccclass, property, type } = _decorator;
 
 @ccclass('World')
 export class World extends Component {
+    @type(TerrainGenerator)
+    terrainGenerator!: TerrainGenerator;
+
+    @property
+    seedOffSet = new Vec2();
+
     @property
     mapSizeInChunks!: number;
 
@@ -17,12 +23,6 @@ export class World extends Component {
 
     @property
     chunkHeight!: number;
-
-    @property
-    waterThreshold!: number;
-
-    @property({ type: CCFloat })
-    noiseScale!: number;
 
     @property(Prefab)
     chunkPrefab!: Prefab;
@@ -41,8 +41,9 @@ export class World extends Component {
                     this.chunkSize,
                     this.chunkHeight
                 );
-                this.generateVoxels(data);
-                this.chunkDataDictionary.set(data.worldPosition, data);
+
+                const terrainData = this.terrainGenerator.generateChunkData(data, this.seedOffSet);
+                this.chunkDataDictionary.set(data.worldPosition, terrainData);
             }
         }
 
@@ -78,39 +79,7 @@ export class World extends Component {
         return Chunk.getBlockFromChunkCoordinatesVec3(containerChunk, blockInChunkCoordinates);
     }
 
-    private generateVoxels(data: ChunkData): void {
-        for (let x = 0; x < data.chunkSize; x++) {
-            for (let z = 0; z < data.chunkSize; z++) {
-                this.generateColumnVoxels(data, x, z);
-            }
-        }
-    }
-
-    private generateColumnVoxels(data: ChunkData, x: number, z: number): void {
-        const noiseValue = simplePerlinNoise(
-            (data.worldPosition.x + x) * this.noiseScale,
-            (data.worldPosition.z + z) * this.noiseScale
-        );
-
-        const groundPosition = Math.round(noiseValue * this.chunkHeight);
-
-        for (let y = 0; y < this.chunkHeight; y++) {
-            const voxelType = this.getVoxelType(y, groundPosition);
-            Chunk.setBlock(data, new Vec3(x, y, z), voxelType);
-        }
-    }
-
-    private getVoxelType(y: number, groundPosition: number): BlockType {
-        if (y > 0 && y > groundPosition) {
-            return y < this.waterThreshold ? BlockType.Water : BlockType.Air;
-        }
-
-        if (y === groundPosition) {
-            return BlockType.GrassDirt;
-        }
-
-        return BlockType.Dirt;
-    }
+    // private generateVoxels(data: ChunkData): void {}
 
     private cleanUpWorldData(): void {
         this.chunkDataDictionary.clear();

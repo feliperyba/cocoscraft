@@ -1,5 +1,6 @@
-// Define permutation table
 // this was taken from https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
+
+// Define permutation table
 const p = new Uint8Array([
     151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240,
     21, 10, 23, 190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33, 88,
@@ -19,7 +20,17 @@ const grad3 = new Float32Array([
     1, 1, 0, -1, 1, 0, 1, -1, 0, -1, -1, 0, 1, 0, 1, -1, 0, 1, 1, 0, -1, -1, 0, -1, 0, 1, 1, 0, -1, 1, 0, -1, -1,
 ]);
 
-function noise(x: number, y: number): number {
+// Fade function as defined by Ken Perlin
+function fade(t: number): number {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+}
+
+// Linear interpolation function
+function lerp(a: number, b: number, t: number): number {
+    return (1 - t) * a + t * b;
+}
+
+export function simpleNoise(x: number, y: number): number {
     let X = Math.floor(x),
         Y = Math.floor(y);
     // Get relative xy coordinates of point within that cell
@@ -38,43 +49,3 @@ function noise(x: number, y: number): number {
     // Interpolate the four results
     return lerp(lerp(n00, n10, u), lerp(n01, n11, u), fade(y));
 }
-
-// Fade function as defined by Ken Perlin
-function fade(t: number): number {
-    return t * t * t * (t * (t * 6 - 15) + 10);
-}
-
-// Linear interpolation function
-function lerp(a: number, b: number, t: number): number {
-    return (1 - t) * a + t * b;
-}
-
-const settings = {
-    redistributionModifier: 1.2,
-    exponent: 4,
-    noiseZoom: 0.01,
-    octaves: 5,
-    persistance: 0.5,
-};
-
-export const simplePerlinNoise = (x: number, z: number): number => {
-    x *= settings.noiseZoom;
-    z *= settings.noiseZoom;
-    x += settings.noiseZoom;
-    z += settings.noiseZoom;
-
-    let total = 0;
-    let frequency = 1;
-    let amplitude = 1;
-    let amplitudeSum = 0;
-    for (let i = 0; i < settings.octaves; i++) {
-        total += noise(x * frequency, z * frequency) * amplitude;
-
-        amplitudeSum += amplitude;
-
-        amplitude *= settings.persistance;
-        frequency *= 2;
-    }
-
-    return total / amplitudeSum;
-};

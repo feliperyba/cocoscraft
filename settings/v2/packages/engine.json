@@ -37,7 +37,7 @@
       },
       "physics": {
         "_value": true,
-        "_option": "physics-physx"
+        "_option": "physics-ammo"
       },
       "physics-ammo": {
         "_value": false
@@ -86,7 +86,7 @@
         "_value": false
       },
       "video": {
-        "_value": true
+        "_value": false
       },
       "webview": {
         "_value": false
@@ -138,13 +138,12 @@
       "light-probe",
       "marionette",
       "occlusion-query",
-      "physics-physx",
+      "physics-ammo",
       "primitive",
       "profiler",
       "skeletal-animation",
       "terrain",
-      "ui",
-      "video"
+      "ui"
     ],
     "noDeprecatedFeatures": {
       "value": false,

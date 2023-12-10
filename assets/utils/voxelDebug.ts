@@ -1,5 +1,7 @@
 import { _decorator, Component, director, Node, ResolutionPolicy, view } from 'cc';
 
+import { WaterLayer } from '@/scripts/map/layers/waterLayer';
+
 import { World } from '../scripts/map/world';
 import { eGroup } from './easyMenu/src/eGroup';
 import { eMenu } from './easyMenu/src/eMenu';
@@ -23,14 +25,26 @@ export class VoxelDebug extends Component {
     group!: eGroup;
 
     onLoad(): void {
+        const noiseSettings = this.worldReferece.terrainGenerator.biomeGenerator.noiseSettings;
+
         this.group = this.easyMenu.addGroup('Debug');
 
         this.group.addItem('Reset Voxel Scene', () => {
             director.loadScene('voxel-map');
         });
 
-        this.group.addItem('Go to PhysX Scene', () => {
+        /*this.group.addItem('Go to PhysX Scene', () => {
             director.loadScene('main');
+        });*/
+
+        const group2 = this.group.addGroup('World Seed');
+
+        group2.addEdit('Seed X', this.worldReferece.seedOffSet.x, value => {
+            this.worldReferece.seedOffSet.x = Number(value);
+        });
+
+        group2.addEdit('Seed Y', this.worldReferece.seedOffSet.y, value => {
+            this.worldReferece.seedOffSet.y = Number(value);
         });
 
         this.group.addEdit('Map Size', this.worldReferece.mapSizeInChunks, value => {
@@ -45,12 +59,32 @@ export class VoxelDebug extends Component {
             this.worldReferece.chunkHeight = Number(value);
         });
 
-        this.group.addEdit('Water Threshold', this.worldReferece.waterThreshold, value => {
-            this.worldReferece.waterThreshold = Number(value);
+        const waterLayer = this.worldReferece.terrainGenerator.biomeGenerator.getComponentInChildren(
+            'WaterLayer'
+        )! as WaterLayer;
+
+        this.group.addEdit('Water Threshold', waterLayer.waterLevel, value => {
+            waterLayer.waterLevel = Number(value);
         });
 
-        this.group.addEdit('Noise Scale', this.worldReferece.noiseScale, value => {
-            this.worldReferece.noiseScale = Number(value);
+        this.group.addEdit('Redistribution Modifier', noiseSettings.redistributionModifier, value => {
+            noiseSettings.redistributionModifier = Number(value);
+        });
+
+        this.group.addEdit('Noise Zoom', noiseSettings.noiseZoom, value => {
+            noiseSettings.noiseZoom = Number(value);
+        });
+
+        this.group.addEdit('Persistance', noiseSettings.persistance, value => {
+            noiseSettings.persistance = Number(value);
+        });
+
+        this.group.addEdit('Exponent', noiseSettings.exponent, value => {
+            noiseSettings.exponent = Number(value);
+        });
+
+        this.group.addEdit('Octaves', noiseSettings.octaves, value => {
+            noiseSettings.octaves = Number(value);
         });
 
         this.group.addToggle('Post Processing', (value = false) => {
@@ -61,10 +95,10 @@ export class VoxelDebug extends Component {
             this.gameManager.spawnPlayer();
         });
 
-        this.makeResponsive();
+        /*this.makeResponsive();
         window.addEventListener('resize', () => {
             this.makeResponsive();
-        });
+        });*/
     }
 
     makeResponsive(): void {

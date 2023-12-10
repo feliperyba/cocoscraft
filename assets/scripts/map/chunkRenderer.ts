@@ -1,20 +1,9 @@
-import {
-    _decorator,
-    Color,
-    Component,
-    CurveRange,
-    GradientRange,
-    Line,
-    MeshRenderer,
-    Node,
-    physics,
-    primitives,
-    utils,
-} from 'cc';
+import { _decorator, Component, MeshRenderer, Node, physics, primitives, utils } from 'cc';
 
 import { Chunk } from './chunk';
 import { ChunkData } from './chunkData';
 import { MeshData } from './meshData';
+import { calculateNormals } from './utils/normalsAux';
 
 const { ccclass, type, property } = _decorator;
 
@@ -64,10 +53,12 @@ export class ChunkRenderer extends Component {
     private renderMesh(meshData: MeshData): void {
         const landVertices = meshData.vertices.flatMap(v => [v.x, v.y, v.z]);
         const landUvs = meshData.uv.flatMap(uv => [uv.x, uv.y]);
+        const landNormals = calculateNormals(landVertices, meshData.triangles);
 
         const landGeometry: primitives.IGeometry = {
             positions: landVertices,
             indices: meshData.triangles,
+            normals: landNormals,
             uvs: landUvs,
         };
 
@@ -76,10 +67,12 @@ export class ChunkRenderer extends Component {
         if (meshData.waterMesh) {
             const waterVertices = meshData.waterMesh.vertices.flatMap(v => [v.x, v.y, v.z]);
             const waterUvs = meshData.waterMesh.uv.flatMap(uv => [uv.x, uv.y]);
+            const waterNormals = calculateNormals(waterVertices, meshData.waterMesh.triangles);
 
             const waterGeometry: primitives.IGeometry = {
                 positions: waterVertices,
                 indices: meshData.waterMesh.triangles,
+                normals: waterNormals,
                 uvs: waterUvs,
             };
 
@@ -93,11 +86,10 @@ export class ChunkRenderer extends Component {
         };
         this.meshCollider.mesh = utils.MeshUtils.createMesh(collisionGeometry);
 
-
-        if (this.showGizmo && this.chunkData) this.showDebugGizmo();
+        // if (this.showGizmo && this.chunkData) this.showDebugGizmo();
     }
 
-    private showDebugGizmo(): void {
+    /*private showDebugGizmo(): void {
         const meshdata = Chunk.getMeshData(this.chunkData);
         const vertices = meshdata.collisionVertices;
         const numVertices = vertices.length;
@@ -137,5 +129,5 @@ export class ChunkRenderer extends Component {
                 line.positions.push(v);
             }
         }
-    }
+    }*/
 }

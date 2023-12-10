@@ -29,10 +29,10 @@ export class PhysxDebug extends Component {
             this.postReference.active = value;
         });
 
-        this.makeResponsive();
+        /*this.makeResponsive();
         window.addEventListener('resize', () => {
             this.makeResponsive();
-        });
+        });*/
     }
 
     makeResponsive(): void {
