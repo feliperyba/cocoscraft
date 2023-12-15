@@ -52,13 +52,13 @@ export default class OrbitCamera extends Component {
     private targetRadius = 10;
 
     @type(Node)
-    get targetNode(): Node {
+    get targetNode(): Node | null {
         return this.target;
     }
     set targetNode(v) {
         this.target = v;
         this.targetRotationVec3.set(this.startRotation);
-        this.targetCenter.set(v.worldPosition);
+        this.targetCenter.set(v?.worldPosition || Vec3.ZERO);
     }
 
     @property
@@ -111,7 +111,7 @@ export default class OrbitCamera extends Component {
         if (!this.followTargetRotationY) return;
 
         targetRotation = tempVec3_2.set(targetRotation);
-        Quat.toEuler(tempVec3, this.target.worldRotation);
+        Quat.toEuler(tempVec3, this.target!.worldRotation);
         targetRotation.y = lerp(targetRotation.y, targetRotation.y + tempVec3.y, 0.5);
     }
 
@@ -120,7 +120,7 @@ export default class OrbitCamera extends Component {
     }
 
     onTouchMove(touch?: EventTouch | EventMouse): void {
-        if (!this.touched) return;
+        if (!this.touched || !touch) return;
 
         const delta = touch.getDelta();
 
@@ -147,7 +147,7 @@ export default class OrbitCamera extends Component {
         rotation.z = 0;
     }
 
-    update(dt): void {
+    update(dt: number): void {
         let targetRotation = this.targetRotationVec3;
 
         if (this.autoRotate && !this.touched) {
@@ -183,5 +183,11 @@ export default class OrbitCamera extends Component {
 
         this.node.position = tempVec3;
         this.node.lookAt(this.center);
+    }
+    protected onDestroy(): void {
+        input.off(Input.EventType.TOUCH_START, this.onTouchStart, this);
+        input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
+        input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this);
+        input.off(Input.EventType.MOUSE_WHEEL, this.onMouseWhee, this);
     }
 }

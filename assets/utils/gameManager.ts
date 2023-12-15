@@ -1,5 +1,4 @@
-import { _decorator, Component, instantiate, Node, Prefab } from 'cc';
-import { director } from 'cc';
+import { _decorator, Component, director, instantiate, Node, Prefab } from 'cc';
 
 import OrbitCamera from '../scripts/camera/orbitCamera';
 const { ccclass, type } = _decorator;
@@ -23,7 +22,6 @@ export class GameManager extends Component {
 
         const player = instantiate(this.player);
         player.setPosition(this.spawnPoint.position);
-        this.cameraReference.target = player;
 
         director.getScene()!.addChild(player);
     }

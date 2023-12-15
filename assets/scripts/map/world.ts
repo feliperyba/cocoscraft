@@ -59,10 +59,6 @@ export class World extends Component {
             chunkRenderer.initChunk(data);
             chunkRenderer.updateChunkWithData(meshData);
 
-            // this is for later when using dynamic meshes
-            // chunkRenderer.meshRender.onGeometryChanged();
-            // chunkRenderer.meshRenderWater.onGeometryChanged();
-
             this.node.addChild(chunkObject);
         }
     }
@@ -78,8 +74,6 @@ export class World extends Component {
         const blockInChunkCoordinates: Vec3 = Chunk.getBlockInChunkCoordinates(containerChunk, new Vec3(x, y, z));
         return Chunk.getBlockFromChunkCoordinatesVec3(containerChunk, blockInChunkCoordinates);
     }
-
-    // private generateVoxels(data: ChunkData): void {}
 
     private cleanUpWorldData(): void {
         this.chunkDataDictionary.clear();

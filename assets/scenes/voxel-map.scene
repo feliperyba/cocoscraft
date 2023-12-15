@@ -295,7 +295,7 @@
       "__id__": 1
     },
     "_children": [],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 7
@@ -1263,7 +1263,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 640,
-      "y": 360,
+      "y": 359.99999999999994,
       "z": 0
     },
     "_lrot": {
@@ -1348,7 +1348,7 @@
     "_priority": 1073741824,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 387.0698644421272,
+    "_orthoHeight": 359.99999999999994,
     "_near": 1,
     "_far": 2000,
     "_color": {
@@ -1412,7 +1412,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": -554.546,
-      "y": -318.508,
+      "y": -318.5079999999999,
       "z": 0
     },
     "_lrot": {
@@ -1828,7 +1828,7 @@
     "_enabled": true,
     "__prefab": null,
     "player": {
-      "__uuid__": "adf0ddc1-9590-4cbb-9f5e-b68de65e745e",
+      "__uuid__": "d9b8280d-2f3c-4ab3-b062-b0c794f65630",
       "__expectedType__": "cc.Prefab"
     },
     "spawnPoint": {
@@ -1911,7 +1911,7 @@
     "value": {
       "__type__": "cc.Vec3",
       "x": 525,
-      "y": 350,
+      "y": 349.99999999999994,
       "z": 0
     }
   },
@@ -1975,7 +1975,7 @@
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 1280,
-      "height": 720
+      "height": 719.9999999999999
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",

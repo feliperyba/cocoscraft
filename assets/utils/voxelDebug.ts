@@ -87,9 +87,13 @@ export class VoxelDebug extends Component {
             noiseSettings.octaves = Number(value);
         });
 
-        this.group.addToggle('Post Processing', (value = false) => {
-            this.postReference.active = value;
-        });
+        this.group.addToggle(
+            'Post Processing',
+            (value: boolean) => {
+                this.postReference.active = value;
+            },
+            false
+        );
 
         this.group.addItem('Spawn Player', () => {
             this.gameManager.spawnPlayer();

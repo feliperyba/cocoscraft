@@ -4,11 +4,6 @@
   /* Add your custom configuration here. */
   "compilerOptions": {
     "strict": true,
-    "paths": {
-      "@/*": [
-        "./assets/*"
-      ]
-    },
     "lib": [
       "dom",
       "ESNext"
