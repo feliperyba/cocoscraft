@@ -7,6 +7,7 @@ import {
     Input,
     input,
     math,
+    Node,
     Quat,
     Vec3,
 } from 'cc';
@@ -15,10 +16,13 @@ const { ccclass, property } = _decorator;
 @ccclass('FPSCameraController')
 export class FPSCameraController extends Component {
     @property({ type: CapsuleCharacterController })
-    charCtrl: CapsuleCharacterController | undefined;
+    charCtrl?: CapsuleCharacterController;
 
     @property
     smooth = 6;
+
+    @property({ type: Node })
+    postProcess?: Node;
 
     private angleVec = new Vec3();
     private curAngleVec = new Vec3();

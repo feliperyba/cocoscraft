@@ -1,5 +1,6 @@
 import { _decorator, Component, instantiate, Prefab, Vec2, Vec3 } from 'cc';
 
+import { BlockHelper } from './blockHelper';
 import { Chunk } from './chunk';
 import { ChunkData } from './chunkData';
 import { ChunkRenderer } from './chunkRenderer';
@@ -48,7 +49,7 @@ export class World extends Component {
         }
 
         for (const data of this.chunkDataDictionary.values()) {
-            const meshData = Chunk.getMeshData(data);
+            const meshData = Chunk.getMeshData(data, BlockHelper);
             const chunkObject = instantiate(this.chunkPrefab);
 
             chunkObject.setPosition(data.worldPosition);

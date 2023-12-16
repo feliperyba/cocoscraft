@@ -1,6 +1,5 @@
 import { _decorator, Vec3 } from 'cc';
 
-import { BlockHelper } from './blockHelper';
 import { ChunkData } from './chunkData';
 import { MeshData } from './meshData';
 import { BlockType } from './models';
@@ -10,13 +9,13 @@ const { ccclass } = _decorator;
 
 @ccclass('Chunk')
 export class Chunk {
-    static getMeshData(chunkData: ChunkData): MeshData {
+    static getMeshData(chunkData: ChunkData, blockHelper: any): MeshData {
         let meshData = new MeshData(true);
 
         this.loopThroughChunks(
             chunkData,
             (x, y, z) =>
-                (meshData = BlockHelper.getMeshData(
+                (meshData = blockHelper.getMeshData(
                     chunkData,
                     x,
                     y,

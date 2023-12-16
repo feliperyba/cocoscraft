@@ -9,6 +9,9 @@ export class GameManager extends Component {
     player!: Prefab;
 
     @type(Node)
+    playerInstance?: Node;
+
+    @type(Node)
     spawnPoint!: Node;
 
     @type(OrbitCamera)
@@ -16,13 +19,16 @@ export class GameManager extends Component {
 
     isInstantiated = false;
 
-    spawnPlayer(): void {
+    spawnPlayer(postReference: Node): void {
         if (this.isInstantiated) return;
         this.isInstantiated = true;
 
-        const player = instantiate(this.player);
-        player.setPosition(this.spawnPoint.position);
+        this.playerInstance = instantiate(this.player);
+        this.playerInstance.setPosition(this.spawnPoint.position);
 
-        director.getScene()!.addChild(player);
+        postReference.active = false;
+        this.cameraReference.enabled = false;
+
+        director.getScene()!.addChild(this.playerInstance);
     }
 }
