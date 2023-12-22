@@ -26,6 +26,12 @@ export class VoxelDebug extends Component {
 
     postReferenceActive = this.postReference;
 
+    protected update(): void {
+        this.postReferenceActive = this.gameManager.playerInstance
+            ? this.gameManager.playerInstance.getComponentInChildren(CharacterFps)!.camera.postProcess!
+            : this.postReference;
+    }
+
     onLoad(): void {
         const noiseSettings = this.worldReferece.terrainGenerator.biomeGenerator.noiseSettings;
 
@@ -35,6 +41,7 @@ export class VoxelDebug extends Component {
             director.loadScene('voxel-map');
         });
 
+        // #region World Seed
         const group2 = this.group.addGroup('World Seed');
 
         group2.addEdit('Seed X', this.worldReferece.seedOffSet.x, value => {
@@ -85,8 +92,110 @@ export class VoxelDebug extends Component {
             noiseSettings.octaves = Number(value);
         });
 
-        const group3 = this.group.addGroup('Post Processing');
+        group2.changeVisible();
+        //#endregion
 
+        //#region Domain Warping
+        const domainGroup = this.group.addGroup('Domain Warping');
+        const domainConfig = this.worldReferece.terrainGenerator.biomeGenerator.domainWarping;
+
+        domainGroup.addToggle(
+            'Enable',
+            (value: boolean) => {
+                this.worldReferece.terrainGenerator.biomeGenerator.useDomainWarping = value;
+            },
+            true
+        );
+
+        domainGroup.addEdit('Amplitude X', domainConfig.amplitudeX, value => {
+            domainConfig.amplitudeX = Number(value);
+        });
+
+        domainGroup.addEdit('Amplitude Y', domainConfig.amplitudeY, value => {
+            domainConfig.amplitudeY = Number(value);
+        });
+
+        const domainXGroup = domainGroup.addGroup('Domain X');
+        domainXGroup.addEdit('Redistribution Modifier', domainConfig.noiseDomainX.redistributionModifier, value => {
+            domainConfig.noiseDomainX.redistributionModifier = Number(value);
+        });
+
+        domainXGroup.addEdit('Noise Zoom', domainConfig.noiseDomainX.noiseZoom, value => {
+            domainConfig.noiseDomainX.noiseZoom = Number(value);
+        });
+
+        domainXGroup.addEdit('Persistance', domainConfig.noiseDomainX.persistance, value => {
+            domainConfig.noiseDomainX.persistance = Number(value);
+        });
+
+        domainXGroup.addEdit('Exponent', domainConfig.noiseDomainX.exponent, value => {
+            domainConfig.noiseDomainX.exponent = Number(value);
+        });
+
+        domainXGroup.addEdit('Octaves', domainConfig.noiseDomainX.octaves, value => {
+            domainConfig.noiseDomainX.octaves = Number(value);
+        });
+
+        domainXGroup.addEdit('Offset X', domainConfig.noiseDomainX.offset.x, value => {
+            domainConfig.noiseDomainX.offset.x = Number(value);
+        });
+
+        domainXGroup.addEdit('Offset Y', domainConfig.noiseDomainX.offset.y, value => {
+            domainConfig.noiseDomainX.offset.y = Number(value);
+        });
+
+        domainXGroup.addEdit('World Offset X', domainConfig.noiseDomainX.worldOffset.x, value => {
+            domainConfig.noiseDomainX.worldOffset.x = Number(value);
+        });
+
+        domainXGroup.addEdit('World Offset Y', domainConfig.noiseDomainX.worldOffset.y, value => {
+            domainConfig.noiseDomainX.worldOffset.y = Number(value);
+        });
+        domainXGroup.changeVisible();
+
+        const domainYGroup = domainGroup.addGroup('Domain Y');
+        domainYGroup.addEdit('Redistribution Modifier', domainConfig.noiseDomainY.redistributionModifier, value => {
+            domainConfig.noiseDomainY.redistributionModifier = Number(value);
+        });
+
+        domainYGroup.addEdit('Noise Zoom', domainConfig.noiseDomainY.noiseZoom, value => {
+            domainConfig.noiseDomainY.noiseZoom = Number(value);
+        });
+
+        domainYGroup.addEdit('Persistance', domainConfig.noiseDomainY.persistance, value => {
+            domainConfig.noiseDomainY.persistance = Number(value);
+        });
+
+        domainYGroup.addEdit('Exponent', domainConfig.noiseDomainY.exponent, value => {
+            domainConfig.noiseDomainY.exponent = Number(value);
+        });
+
+        domainYGroup.addEdit('Octaves', domainConfig.noiseDomainY.octaves, value => {
+            domainConfig.noiseDomainY.octaves = Number(value);
+        });
+
+        domainYGroup.addEdit('Offset X', domainConfig.noiseDomainY.offset.x, value => {
+            domainConfig.noiseDomainY.offset.x = Number(value);
+        });
+
+        domainYGroup.addEdit('Offset Y', domainConfig.noiseDomainY.offset.y, value => {
+            domainConfig.noiseDomainY.offset.y = Number(value);
+        });
+
+        domainYGroup.addEdit('World Offset X', domainConfig.noiseDomainY.worldOffset.x, value => {
+            domainConfig.noiseDomainY.worldOffset.x = Number(value);
+        });
+
+        domainYGroup.addEdit('World Offset Y', domainConfig.noiseDomainY.worldOffset.y, value => {
+            domainConfig.noiseDomainY.worldOffset.y = Number(value);
+        });
+        domainYGroup.changeVisible();
+
+        domainGroup.changeVisible();
+        //#endregion
+
+        //#region Post Processing
+        const group3 = this.group.addGroup('Post Processing');
         group3.addToggle(
             'Enable',
             (value: boolean) => {
@@ -142,21 +251,17 @@ export class VoxelDebug extends Component {
             },
             true
         );
+        group3.changeVisible();
+        //#endregion
 
         this.group.addItem('Spawn Player', () => {
             this.gameManager.spawnPlayer(this.postReference);
         });
 
-        /*this.makeResponsive();
+        this.makeResponsive();
         window.addEventListener('resize', () => {
             this.makeResponsive();
-        });*/
-    }
-
-    protected update(): void {
-        this.postReferenceActive = this.gameManager.playerInstance
-            ? this.gameManager.playerInstance.getComponentInChildren(CharacterFps)!.camera.postProcess!
-            : this.postReference;
+        });
     }
 
     makeResponsive(): void {
