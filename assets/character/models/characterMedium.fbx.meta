@@ -204,6 +204,20 @@
           {}
         ]
       }
-    }
+    },
+    "allowMeshDataAccess": true,
+    "meshOptimize": {
+      "enable": false
+    },
+    "meshSimplify": {
+      "enable": false,
+      "targetRatio": 0.35,
+      "errorRate": 0,
+      "autoErrorRate": true
+    },
+    "disableMeshSplit": true,
+    "skipValidation": true,
+    "normals": 0,
+    "tangents": 0
   }
 }

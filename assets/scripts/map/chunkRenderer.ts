@@ -1,5 +1,6 @@
 import { _decorator, Component, MeshRenderer, Node, physics, primitives, utils } from 'cc';
 
+import { BlockHelper } from './blockHelper';
 import { Chunk } from './chunk';
 import { ChunkData } from './chunkData';
 import { MeshData } from './meshData';
@@ -43,7 +44,7 @@ export class ChunkRenderer extends Component {
     }
 
     updateChunk(): void {
-        this.renderMesh(Chunk.getMeshData(this.chunkData));
+        this.renderMesh(Chunk.getMeshData(this.chunkData, BlockHelper));
     }
 
     updateChunkWithData(meshData: MeshData): void {

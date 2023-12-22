@@ -12,31 +12,31 @@
     ],
     "_variables": {
       "isInteractingS": {
-        "__id__": 196
-      },
-      "isInteractingC": {
-        "__id__": 197
-      },
-      "isGrounded": {
         "__id__": 198
       },
-      "isRunning": {
+      "isInteractingC": {
         "__id__": 199
       },
-      "isJumping": {
+      "isGrounded": {
         "__id__": 200
       },
-      "isCrouched": {
+      "isRunning": {
         "__id__": 201
       },
-      "isMoving": {
+      "isJumping": {
         "__id__": 202
       },
-      "hasPunched": {
+      "isCrouched": {
         "__id__": 203
       },
-      "hasKicked": {
+      "isMoving": {
         "__id__": 204
+      },
+      "hasPunched": {
+        "__id__": 205
+      },
+      "hasKicked": {
+        "__id__": 206
       }
     }
   },
@@ -140,43 +140,43 @@
         "__id__": 111
       },
       {
-        "__id__": 116
+        "__id__": 118
       },
       {
-        "__id__": 123
+        "__id__": 125
       },
       {
-        "__id__": 130
+        "__id__": 132
       },
       {
-        "__id__": 134
+        "__id__": 136
       },
       {
-        "__id__": 141
+        "__id__": 143
       },
       {
-        "__id__": 150
+        "__id__": 152
       },
       {
-        "__id__": 155
+        "__id__": 157
       },
       {
-        "__id__": 160
+        "__id__": 162
       },
       {
-        "__id__": 165
+        "__id__": 167
       },
       {
-        "__id__": 170
+        "__id__": 172
       },
       {
-        "__id__": 175
+        "__id__": 177
       },
       {
-        "__id__": 182
+        "__id__": 184
       },
       {
-        "__id__": 189
+        "__id__": 191
       }
     ],
     "_entryState": {
@@ -1269,20 +1269,23 @@
     "conditions": [
       {
         "__id__": 112
+      },
+      {
+        "__id__": 114
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 114
+      "__id__": 116
     },
     "endEventBinding": {
-      "__id__": 115
+      "__id__": 117
     },
-    "duration": 0.3,
+    "duration": 0.15,
     "relativeDuration": false,
     "exitConditionEnabled": true,
-    "_exitCondition": 1
+    "_exitCondition": 0.0001
   },
   {
     "__type__": "cc.animation.UnaryCondition",
@@ -1294,6 +1297,18 @@
   {
     "__type__": "cc.animation.BindableBoolean",
     "variable": "isCrouched",
+    "value": false
+  },
+  {
+    "__type__": "cc.animation.UnaryCondition",
+    "operator": 1,
+    "operand": {
+      "__id__": 115
+    }
+  },
+  {
+    "__type__": "cc.animation.BindableBoolean",
+    "variable": "isMoving",
     "value": false
   },
   {
@@ -1315,19 +1330,19 @@
     },
     "conditions": [
       {
-        "__id__": 117
+        "__id__": 119
       },
       {
-        "__id__": 119
+        "__id__": 121
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 121
+      "__id__": 123
     },
     "endEventBinding": {
-      "__id__": 122
+      "__id__": 124
     },
     "duration": 0,
     "relativeDuration": false,
@@ -1338,7 +1353,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 0,
     "operand": {
-      "__id__": 118
+      "__id__": 120
     }
   },
   {
@@ -1350,7 +1365,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 0,
     "operand": {
-      "__id__": 120
+      "__id__": 122
     }
   },
   {
@@ -1377,19 +1392,19 @@
     },
     "conditions": [
       {
-        "__id__": 124
+        "__id__": 126
       },
       {
-        "__id__": 126
+        "__id__": 128
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 128
+      "__id__": 130
     },
     "endEventBinding": {
-      "__id__": 129
+      "__id__": 131
     },
     "duration": 0.3,
     "relativeDuration": false,
@@ -1400,7 +1415,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 0,
     "operand": {
-      "__id__": 125
+      "__id__": 127
     }
   },
   {
@@ -1412,7 +1427,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 1,
     "operand": {
-      "__id__": 127
+      "__id__": 129
     }
   },
   {
@@ -1439,16 +1454,16 @@
     },
     "conditions": [
       {
-        "__id__": 131
+        "__id__": 133
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 132
+      "__id__": 134
     },
     "endEventBinding": {
-      "__id__": 133
+      "__id__": 135
     },
     "duration": 0.3,
     "relativeDuration": false,
@@ -1478,19 +1493,19 @@
     },
     "conditions": [
       {
-        "__id__": 135
+        "__id__": 137
       },
       {
-        "__id__": 137
+        "__id__": 139
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 139
+      "__id__": 141
     },
     "endEventBinding": {
-      "__id__": 140
+      "__id__": 142
     },
     "duration": 0.3,
     "relativeDuration": false,
@@ -1501,7 +1516,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 0,
     "operand": {
-      "__id__": 136
+      "__id__": 138
     }
   },
   {
@@ -1513,7 +1528,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 0,
     "operand": {
-      "__id__": 138
+      "__id__": 140
     }
   },
   {
@@ -1540,22 +1555,22 @@
     },
     "conditions": [
       {
-        "__id__": 142
-      },
-      {
         "__id__": 144
       },
       {
         "__id__": 146
+      },
+      {
+        "__id__": 148
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 148
+      "__id__": 150
     },
     "endEventBinding": {
-      "__id__": 149
+      "__id__": 151
     },
     "duration": 0.3,
     "relativeDuration": false,
@@ -1566,7 +1581,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 1,
     "operand": {
-      "__id__": 143
+      "__id__": 145
     }
   },
   {
@@ -1578,7 +1593,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 0,
     "operand": {
-      "__id__": 145
+      "__id__": 147
     }
   },
   {
@@ -1590,7 +1605,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 1,
     "operand": {
-      "__id__": 147
+      "__id__": 149
     }
   },
   {
@@ -1617,27 +1632,27 @@
     },
     "conditions": [
       {
-        "__id__": 151
+        "__id__": 153
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 153
+      "__id__": 155
     },
     "endEventBinding": {
-      "__id__": 154
+      "__id__": 156
     },
-    "duration": 0.3,
+    "duration": 0.25,
     "relativeDuration": false,
-    "exitConditionEnabled": false,
-    "_exitCondition": 1
+    "exitConditionEnabled": true,
+    "_exitCondition": 0.0001
   },
   {
     "__type__": "cc.animation.UnaryCondition",
     "operator": 0,
     "operand": {
-      "__id__": 152
+      "__id__": 154
     }
   },
   {
@@ -1664,27 +1679,27 @@
     },
     "conditions": [
       {
-        "__id__": 156
+        "__id__": 158
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 158
+      "__id__": 160
     },
     "endEventBinding": {
-      "__id__": 159
+      "__id__": 161
     },
-    "duration": 0.3,
+    "duration": 0.15,
     "relativeDuration": false,
-    "exitConditionEnabled": false,
-    "_exitCondition": 0.1
+    "exitConditionEnabled": true,
+    "_exitCondition": 0.15
   },
   {
     "__type__": "cc.animation.UnaryCondition",
     "operator": 0,
     "operand": {
-      "__id__": 157
+      "__id__": 159
     }
   },
   {
@@ -1711,16 +1726,16 @@
     },
     "conditions": [
       {
-        "__id__": 161
+        "__id__": 163
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 163
+      "__id__": 165
     },
     "endEventBinding": {
-      "__id__": 164
+      "__id__": 166
     },
     "duration": 0.3,
     "relativeDuration": false,
@@ -1731,7 +1746,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 1,
     "operand": {
-      "__id__": 162
+      "__id__": 164
     }
   },
   {
@@ -1758,27 +1773,27 @@
     },
     "conditions": [
       {
-        "__id__": 166
+        "__id__": 168
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 168
+      "__id__": 170
     },
     "endEventBinding": {
-      "__id__": 169
+      "__id__": 171
     },
-    "duration": 0.3,
+    "duration": 0.15,
     "relativeDuration": false,
-    "exitConditionEnabled": false,
-    "_exitCondition": 1
+    "exitConditionEnabled": true,
+    "_exitCondition": 0.15
   },
   {
     "__type__": "cc.animation.UnaryCondition",
     "operator": 0,
     "operand": {
-      "__id__": 167
+      "__id__": 169
     }
   },
   {
@@ -1805,16 +1820,16 @@
     },
     "conditions": [
       {
-        "__id__": 171
+        "__id__": 173
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 173
+      "__id__": 175
     },
     "endEventBinding": {
-      "__id__": 174
+      "__id__": 176
     },
     "duration": 0.3,
     "relativeDuration": false,
@@ -1825,7 +1840,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 1,
     "operand": {
-      "__id__": 172
+      "__id__": 174
     }
   },
   {
@@ -1852,19 +1867,19 @@
     },
     "conditions": [
       {
-        "__id__": 176
+        "__id__": 178
       },
       {
-        "__id__": 178
+        "__id__": 180
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 180
+      "__id__": 182
     },
     "endEventBinding": {
-      "__id__": 181
+      "__id__": 183
     },
     "duration": 0.3,
     "relativeDuration": false,
@@ -1875,7 +1890,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 1,
     "operand": {
-      "__id__": 177
+      "__id__": 179
     }
   },
   {
@@ -1887,7 +1902,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 0,
     "operand": {
-      "__id__": 179
+      "__id__": 181
     }
   },
   {
@@ -1914,19 +1929,19 @@
     },
     "conditions": [
       {
-        "__id__": 183
+        "__id__": 185
       },
       {
-        "__id__": 185
+        "__id__": 187
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 187
+      "__id__": 189
     },
     "endEventBinding": {
-      "__id__": 188
+      "__id__": 190
     },
     "duration": 0.1,
     "relativeDuration": false,
@@ -1937,7 +1952,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 0,
     "operand": {
-      "__id__": 184
+      "__id__": 186
     }
   },
   {
@@ -1949,7 +1964,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 0,
     "operand": {
-      "__id__": 186
+      "__id__": 188
     }
   },
   {
@@ -1976,19 +1991,19 @@
     },
     "conditions": [
       {
-        "__id__": 190
+        "__id__": 192
       },
       {
-        "__id__": 192
+        "__id__": 194
       }
     ],
     "destinationStart": 0,
     "relativeDestinationStart": false,
     "startEventBinding": {
-      "__id__": 194
+      "__id__": 196
     },
     "endEventBinding": {
-      "__id__": 195
+      "__id__": 197
     },
     "duration": 0.3,
     "relativeDuration": false,
@@ -1999,7 +2014,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 1,
     "operand": {
-      "__id__": 191
+      "__id__": 193
     }
   },
   {
@@ -2011,7 +2026,7 @@
     "__type__": "cc.animation.UnaryCondition",
     "operator": 1,
     "operand": {
-      "__id__": 193
+      "__id__": 195
     }
   },
   {

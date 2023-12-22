@@ -101,7 +101,7 @@
         "_value": false
       },
       "terrain": {
-        "_value": true
+        "_value": false
       },
       "light-probe": {
         "_value": true
@@ -142,7 +142,6 @@
       "primitive",
       "profiler",
       "skeletal-animation",
-      "terrain",
       "ui"
     ],
     "noDeprecatedFeatures": {

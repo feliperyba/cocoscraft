@@ -83,25 +83,20 @@ export class CharacterFps extends Component {
 
     // eslint-disable-next-line complexity
     update(deltaTime: number): void {
+        deltaTime = PhysicsSystem.instance.fixedTimeStep;
+
         if (this.characterCtrl.isGrounded) {
             this.playerVelocity.y = 0;
             this.controlZ = 0;
             this.controlX = 0;
         }
 
-        deltaTime = PhysicsSystem.instance.fixedTimeStep;
-
         if (this.characterCtrl.isGrounded) {
             this.currentSpeed = inputMap.key.shift ? this.runSpeed : this.walkSpeed;
         }
 
-        this.playerVelocity.y += this.gravityValue * deltaTime;
-
         const forward = this.node.forward;
         const right = this.node.right;
-
-        this.tempRotation = lerp(this.tempRotation, this.targetRotation, deltaTime * 10);
-        this.node.eulerAngles = this.tempVec3.set(0, this.tempRotation, 0);
 
         // Apply inputs based on player's orientation
         if (this.characterCtrl.isGrounded) {
@@ -134,11 +129,23 @@ export class CharacterFps extends Component {
         }
 
         //control impulse
+        const desiredVelocity = new Vec3(
+            this.controlX * this.currentSpeed,
+            this.playerVelocity.y,
+            this.controlZ * this.currentSpeed
+        );
+
+        Vec3.lerp(this.playerVelocity, this.playerVelocity, desiredVelocity, this.linearDamping * deltaTime);
+        this.playerVelocity.y += this.gravityValue * deltaTime;
+
         this.playerVelocity.z += this.controlZ * this.currentSpeed;
         this.playerVelocity.x += this.controlX * this.currentSpeed;
 
         this.playerVelocity.x *= this.linearDamping;
         this.playerVelocity.z *= this.linearDamping;
+
+        this.tempRotation = lerp(this.tempRotation, this.targetRotation, deltaTime * 10);
+        this.node.eulerAngles = this.tempVec3.set(0, this.tempRotation, 0);
 
         // Create a new movement vector based on the character's input
         this.movement = Vec3.multiplyScalar(this.movement, this.playerVelocity, deltaTime);
@@ -152,6 +159,9 @@ export class CharacterFps extends Component {
         this.animationCtrl.setValue('hasCrouched', inputMap.key.c);
         this.animationCtrl.setValue('isCrouched', inputMap.key.c);
         this.animationCtrl.setValue('isRunning', inputMap.key.shift && this.characterCtrl.isGrounded);
-        this.animationCtrl.setValue('isMoving', inputMap.key.up || inputMap.key.down);
+        this.animationCtrl.setValue(
+            'isMoving',
+            inputMap.key.up || inputMap.key.down || inputMap.key.left || inputMap.key.right
+        );
     }
 }

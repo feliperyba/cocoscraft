@@ -35,10 +35,6 @@ export class VoxelDebug extends Component {
             director.loadScene('voxel-map');
         });
 
-        /*this.group.addItem('Go to PhysX Scene', () => {
-            director.loadScene('main');
-        });*/
-
         const group2 = this.group.addGroup('World Seed');
 
         group2.addEdit('Seed X', this.worldReferece.seedOffSet.x, value => {
@@ -49,8 +45,8 @@ export class VoxelDebug extends Component {
             this.worldReferece.seedOffSet.y = Number(value);
         });
 
-        group2.addEdit('Map Size', this.worldReferece.mapSizeInChunks, value => {
-            this.worldReferece.mapSizeInChunks = Number(value);
+        group2.addEdit('Chunk Drawing Range', this.worldReferece.chunkDrawingRange, value => {
+            this.worldReferece.chunkDrawingRange = Number(value);
         });
 
         group2.addEdit('Chunk Size', this.worldReferece.chunkSize, value => {
@@ -110,7 +106,7 @@ export class VoxelDebug extends Component {
         group3.addToggle(
             'TAA',
             (value: boolean) => {
-                this.postReferenceActive.getComponent('cc.FSR')!.enabled = value;
+                this.postReferenceActive.getComponent('cc.TAA')!.enabled = value;
             },
             true
         );

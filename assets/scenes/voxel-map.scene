@@ -490,9 +490,9 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 10,
+      "x": 0,
       "y": 25,
-      "z": 10
+      "z": 0
     },
     "_lrot": {
       "__type__": "cc.Quat",
@@ -1124,7 +1124,7 @@
   {
     "__type__": "NoiseSettings",
     "redistributionModifier": 0.8,
-    "noiseZoom": 0.008,
+    "noiseZoom": 0.009,
     "persistance": 0.5,
     "exponent": 2,
     "octaves": 5,
@@ -1147,8 +1147,8 @@
     "noiseDomainY": {
       "__id__": 39
     },
-    "amplitudeX": 50,
-    "amplitudeY": 50
+    "amplitudeX": 55,
+    "amplitudeY": 55
   },
   {
     "__type__": "NoiseSettings",
@@ -1177,7 +1177,7 @@
     "octaves": 3,
     "offset": {
       "__type__": "cc.Vec2",
-      "x": 200,
+      "x": -200,
       "y": 222
     },
     "worldOffset": {
@@ -1214,14 +1214,14 @@
     "terrainGenerator": {
       "__id__": 40
     },
+    "chunkDrawingRange": 1,
     "seedOffSet": {
       "__type__": "cc.Vec2",
-      "x": 2,
+      "x": 22,
       "y": 100
     },
-    "mapSizeInChunks": 1,
-    "chunkSize": 100,
-    "chunkHeight": 100,
+    "chunkSize": 64,
+    "chunkHeight": 128,
     "chunkPrefab": {
       "__uuid__": "3a2edd2b-f888-4ca6-b0cf-f3a933ed3f2e",
       "__expectedType__": "cc.Prefab"
@@ -1348,7 +1348,7 @@
     "_priority": 1073741824,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 415.0566893424036,
+    "_orthoHeight": 360,
     "_near": 1,
     "_far": 2000,
     "_color": {
@@ -1827,10 +1827,14 @@
     },
     "_enabled": true,
     "__prefab": null,
+    "worldRef": {
+      "__id__": 41
+    },
     "player": {
       "__uuid__": "d9b8280d-2f3c-4ab3-b062-b0c794f65630",
       "__expectedType__": "cc.Prefab"
     },
+    "detectionTime": 1,
     "spawnPoint": {
       "__id__": 16
     },

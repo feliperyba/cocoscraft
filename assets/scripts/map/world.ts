@@ -1,11 +1,13 @@
-import { _decorator, Component, instantiate, Prefab, Vec2, Vec3 } from 'cc';
+import { _decorator, Component, instantiate, Node, Prefab, Quat, Vec2, Vec3 } from 'cc';
 
 import { BlockHelper } from './blockHelper';
 import { Chunk } from './chunk';
 import { ChunkData } from './chunkData';
 import { ChunkRenderer } from './chunkRenderer';
-import { BlockType } from './models';
+import { BlockType, WorldData } from './models';
 import { TerrainGenerator } from './terrainGenerator';
+import { parseVec3ToInt } from './utils';
+import WorldHelper from './worldHelper';
 const { ccclass, property, type } = _decorator;
 
 @ccclass('World')
@@ -14,10 +16,10 @@ export class World extends Component {
     terrainGenerator!: TerrainGenerator;
 
     @property
-    seedOffSet = new Vec2();
+    chunkDrawingRange!: number;
 
     @property
-    mapSizeInChunks!: number;
+    seedOffSet = new Vec2();
 
     @property
     chunkSize!: number;
@@ -28,34 +30,52 @@ export class World extends Component {
     @property(Prefab)
     chunkPrefab!: Prefab;
 
-    chunkDataDictionary: Map<Vec3, ChunkData> = new Map<Vec3, ChunkData>();
-    chunkDictionary: Map<Vec3, ChunkRenderer> = new Map<Vec3, ChunkRenderer>();
+    worldData = new WorldData();
 
-    generateWorld(): void {
-        this.cleanUpWorldData();
+    protected onLoad(): void {
+        this.worldData.chunkSize = this.chunkSize;
+        this.worldData.chunkHeight = this.chunkHeight;
+    }
 
-        for (let x = 0; x < this.mapSizeInChunks; x++) {
-            for (let z = 0; z < this.mapSizeInChunks; z++) {
-                const data = new ChunkData(
-                    this,
-                    new Vec3(x * this.chunkSize, 0, z * this.chunkSize),
-                    this.chunkSize,
-                    this.chunkHeight
-                );
+    // TODO: There is a strange behaviour that happens when we attach such methods to Button events
+    // it will forward the event as a parameter, dont matter the signature of the method
+    generateWorld(touch?: any, position?: Vec3, cleanUp = true): void {
+        if (cleanUp) this.cleanUpWorldData();
 
-                const terrainData = this.terrainGenerator.generateChunkData(data, this.seedOffSet);
-                this.chunkDataDictionary.set(data.worldPosition, terrainData);
-            }
+        const startPos = position ?? new Vec3(0, 0, 0);
+        const worldGenerationData = WorldHelper.getVisiblePositions(startPos, this, this.worldData);
+
+        for (const pos of worldGenerationData.chunkPositionsToRemove) {
+            WorldHelper.removeChunk(this, pos);
         }
 
-        for (const data of this.chunkDataDictionary.values()) {
+        for (const pos of worldGenerationData.chunkDataPositionsToRemove) {
+            WorldHelper.removeChunkData(this, pos);
+        }
+
+        for (const pos of worldGenerationData.chunkDataPositionsToCreate) {
+            const data = new ChunkData(this, pos, this.chunkSize, this.chunkHeight);
+            const terrainData = this.terrainGenerator.generateChunkData(data, this.seedOffSet);
+
+            this.worldData.chunkDataDictionary.set(parseVec3ToInt(pos), terrainData);
+        }
+
+        for (const pos of worldGenerationData.chunkPositionsToCreate) {
+            const data = this.worldData.chunkDataDictionary.get(parseVec3ToInt(pos));
+
+            if (!data) {
+                console.error('Chunk data not found', pos);
+                continue;
+            }
+
             const meshData = Chunk.getMeshData(data, BlockHelper);
             const chunkObject = instantiate(this.chunkPrefab);
 
             chunkObject.setPosition(data.worldPosition);
+            chunkObject.setRotation(Quat.IDENTITY);
 
             const chunkRenderer = chunkObject.getComponent(ChunkRenderer)!;
-            this.chunkDictionary.set(data.worldPosition, chunkRenderer);
+            this.worldData.chunkDictionary.set(parseVec3ToInt(data.worldPosition), chunkRenderer);
 
             chunkRenderer.initChunk(data);
             chunkRenderer.updateChunkWithData(meshData);
@@ -66,7 +86,7 @@ export class World extends Component {
 
     getBlockFromChunkCoordinates(x: number, y: number, z: number): BlockType {
         const pos: Vec3 = Chunk.chunkPositionFromBlockCoords(this, x, y, z);
-        const containerChunk: ChunkData | undefined = this.chunkDataDictionary.get(pos);
+        const containerChunk: ChunkData | undefined = this.worldData.chunkDataDictionary.get(parseVec3ToInt(pos));
 
         if (containerChunk === undefined) {
             return BlockType.Empty;
@@ -76,11 +96,23 @@ export class World extends Component {
         return Chunk.getBlockFromChunkCoordinatesVec3(containerChunk, blockInChunkCoordinates);
     }
 
+    loadAdditionalChunksRequest(playerInstance: Node): void {
+        const roundedPos = new Vec3(
+            Math.round(playerInstance.position.x),
+            Math.round(playerInstance.position.y),
+            Math.round(playerInstance.position.z)
+        );
+
+        this.generateWorld(undefined, roundedPos, false);
+    }
+
     private cleanUpWorldData(): void {
-        this.chunkDataDictionary.clear();
-        for (const chunk of this.chunkDictionary.values()) {
+        this.worldData.chunkDataDictionary.clear();
+
+        for (const chunk of this.worldData.chunkDictionary.values()) {
             chunk.node.destroy();
         }
-        this.chunkDictionary.clear();
+
+        this.worldData.chunkDictionary.clear();
     }
 }
