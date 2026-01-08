@@ -1,5 +1,5 @@
 {
-  "ver": "2.3.12",
+  "ver": "2.3.14",
   "importer": "fbx",
   "imported": true,
   "uuid": "570b0227-fdcf-478f-8c95-542903d210e8",
@@ -78,7 +78,6 @@
     "fbx": {
       "smartMaterialEnabled": true
     },
-    "redirect": "570b0227-fdcf-478f-8c95-542903d210e8@c6be4",
     "lods": {
       "enable": false,
       "hasBuiltinLOD": false,
@@ -215,6 +214,16 @@
     "materialDumpDir": "db://assets/character/models/Materials_MainChar",
     "skipValidation": false,
     "disableMeshSplit": false,
-    "promoteSingleRootNode": true
+    "promoteSingleRootNode": true,
+    "meshOptimizer": {
+      "enable": false,
+      "algorithm": "simplify",
+      "simplifyOptions": {
+        "targetRatio": 1,
+        "enableSmartLink": true,
+        "agressiveness": 7,
+        "maxIterationCount": 100
+      }
+    }
   }
 }

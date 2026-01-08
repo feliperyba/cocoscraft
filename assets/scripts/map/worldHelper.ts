@@ -1,11 +1,16 @@
 import { Vec3 } from 'cc';
 
 import { WorldData, WorldGenerationData } from './models';
+import { PureWorld } from './pure/pureWorld';
 import { parseVec3ToInt } from './utils';
 import { World } from './world';
 
 export default class WorldHelper {
-    static getVisiblePositions(fromPosition: Vec3, worldRef: World, worldData: WorldData): WorldGenerationData {
+    static getVisiblePositions(
+        fromPosition: Vec3,
+        worldRef: World | PureWorld,
+        worldData: WorldData
+    ): WorldGenerationData {
         const allChunkPositionsNeeded: Vec3[] = this.getChunkPositionsAroundPlayer(worldRef, fromPosition);
         const allChunkDataPositionsNeeded: Vec3[] = this.getDataPositionsAroundPlayer(worldRef, fromPosition);
 
@@ -31,17 +36,21 @@ export default class WorldHelper {
         };
     }
 
-    static getChunkPositionsAroundPlayer(worldRef: World, fromPosition: Vec3): Vec3[] {
+    static getChunkPositionsAroundPlayer(worldRef: World | PureWorld, fromPosition: Vec3): Vec3[] {
         return this.getPositionsAroundPlayer(worldRef, fromPosition, worldRef.chunkDrawingRange);
     }
 
     // We want to know a bit upfront the data of the next chunk before the drwaing range
     // so we can save a bit of the performance on the data generation
-    static getDataPositionsAroundPlayer(worldRef: World, fromPosition: Vec3): Vec3[] {
+    static getDataPositionsAroundPlayer(worldRef: World | PureWorld, fromPosition: Vec3): Vec3[] {
         return this.getPositionsAroundPlayer(worldRef, fromPosition, worldRef.chunkDrawingRange + 1);
     }
 
-    private static getPositionsAroundPlayer(worldRef: World, fromPosition: Vec3, drawingRange: number): Vec3[] {
+    private static getPositionsAroundPlayer(
+        worldRef: World | PureWorld,
+        fromPosition: Vec3,
+        drawingRange: number
+    ): Vec3[] {
         const chunkPositionsToCreate: Vec3[] = [];
 
         const startX = fromPosition.x - drawingRange * worldRef.chunkSize;
@@ -56,18 +65,18 @@ export default class WorldHelper {
 
                 // We want to also create the underground chunks, so when we dig they are already there
                 /*if (
-                    x >= fromPosition.x - world.chunkSize &&
-                    x <= fromPosition.x + world.chunkSize &&
-                    z >= fromPosition.z - world.chunkSize &&
-                    z <= fromPosition.z + world.chunkSize
+                    x >= fromPosition.x - worldRef.chunkSize &&
+                    x <= fromPosition.x + worldRef.chunkSize &&
+                    z >= fromPosition.z - worldRef.chunkSize &&
+                    z <= fromPosition.z + worldRef.chunkSize
                 ) {
                     for (
-                        let y = -world.chunkHeight;
-                        y >= fromPosition.y - world.chunkHeight * 2;
-                        y -= world.chunkHeight
+                        let y = -worldRef.chunkHeight;
+                        y >= fromPosition.y - worldRef.chunkHeight * 2;
+                        y -= worldRef.chunkHeight
                     ) {
-                        chunkPos = this.chunkPositionFromBlockCoords(world, new Vec3(x, y, z));
-                        chunkPositionsToCreate.push(chunkPos);
+                        const chunkPosDown = this.chunkPositionFromBlockCoords(worldRef, new Vec3(x, y, z));
+                        chunkPositionsToCreate.push(chunkPosDown);
                     }
                 }*/
             }
@@ -114,11 +123,14 @@ export default class WorldHelper {
         );
     }
 
-    static removeChunkData(worldRef: World, pos: number): void {
+    static removeChunkData(worldRef: World | PureWorld, pos: number): void {
         worldRef.worldData.chunkDataDictionary.delete(pos);
+        if ('clearChunkCache' in worldRef) {
+            (worldRef as PureWorld).clearChunkCache(pos);
+        }
     }
 
-    static removeChunk(worldRef: World, pos: number): void {
+    static removeChunk(worldRef: World | PureWorld, pos: number): void {
         const chunk = worldRef.worldData.chunkDictionary.get(pos);
         if (!chunk) return;
 
@@ -127,7 +139,7 @@ export default class WorldHelper {
         chunk.node.destroy();
     }
 
-    static chunkPositionFromBlockCoords(worldRef: World, position: Vec3): Vec3 {
+    static chunkPositionFromBlockCoords(worldRef: World | PureWorld, position: Vec3): Vec3 {
         return new Vec3(
             Math.floor(position.x / worldRef.chunkSize) * worldRef.chunkSize,
             Math.floor(position.y / worldRef.chunkHeight) * worldRef.chunkHeight,

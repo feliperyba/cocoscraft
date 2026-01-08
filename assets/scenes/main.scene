@@ -373,7 +373,7 @@
     "__prefab": null,
     "_enableAlphaMask": false,
     "_useHdrIlluminance": false,
-    "_threshold": 0.95,
+    "_threshold": 0.9769545866192959,
     "_iterations": 4,
     "_intensity": 1.2,
     "_id": "9eaIpWSr9NfLLcq4uGXwKK"

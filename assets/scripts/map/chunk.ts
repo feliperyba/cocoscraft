@@ -3,6 +3,7 @@ import { _decorator, Vec3 } from 'cc';
 import { ChunkData } from './chunkData';
 import { MeshData } from './meshData';
 import { BlockType } from './models';
+import { PureWorld } from './pure/pureWorld';
 import { World } from './world';
 
 const { ccclass } = _decorator;
@@ -81,7 +82,7 @@ export class Chunk {
         );
     }
 
-    static chunkPositionFromBlockCoords(world: World, x: number, y: number, z: number): Vec3 {
+    static chunkPositionFromBlockCoords(world: World | PureWorld, x: number, y: number, z: number): Vec3 {
         const pos = new Vec3(
             Math.floor(x / world.chunkSize) * world.chunkSize,
             Math.floor(y / world.chunkHeight) * world.chunkHeight,

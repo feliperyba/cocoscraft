@@ -1,11 +1,11 @@
 {
-  "ver": "2.3.12",
+  "ver": "2.3.14",
   "importer": "fbx",
   "imported": true,
   "uuid": "a91aff58-a826-4bc1-8c40-f636e007e1a6",
   "files": [
-    "__original-animation-0.cconb",
-    "__original-animation-1.cconb"
+    "__original-animation-0.bin",
+    "__original-animation-1.bin"
   ],
   "subMetas": {
     "adecc": {
@@ -24,10 +24,10 @@
         },
         "events": []
       },
-      "ver": "1.0.17",
+      "ver": "1.0.18",
       "imported": true,
       "files": [
-        ".cconb"
+        ".bin"
       ],
       "subMetas": {}
     },
@@ -47,10 +47,10 @@
         },
         "events": []
       },
-      "ver": "1.0.17",
+      "ver": "1.0.18",
       "imported": true,
       "files": [
-        ".cconb"
+        ".bin"
       ],
       "subMetas": {}
     },
@@ -106,7 +106,6 @@
         ]
       }
     ],
-    "redirect": "a91aff58-a826-4bc1-8c40-f636e007e1a6@d52f7",
     "lods": {
       "enable": false,
       "hasBuiltinLOD": false,

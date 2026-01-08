@@ -1,0 +1,15 @@
+{
+  "name": "bee-threads",
+  "version": "5.0.0",
+  "description": "Handle Web Worker threads as promises. Run CPU-intensive code in workers with a simple fluent API - browser only.",
+  "module": "./es/bee-threads.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./es/bee-threads.mjs"
+      }
+    }
+  }
+}

@@ -1,4 +1,4 @@
-const grad3 = [
+export const grad3 = [
     [1, 1, 0],
     [-1, 1, 0],
     [1, -1, 0],
@@ -12,11 +12,11 @@ const grad3 = [
     [0, 1, -1],
     [0, -1, -1],
 ];
-const p = [];
+const p: number[] = [];
 for (let i = 0; i < 256; i++) {
     p[i] = Math.floor(Math.random() * 256);
 }
-const perm = [];
+export const perm: number[] = [];
 for (let i = 0; i < 512; i++) {
     perm[i] = p[i & 255];
 }

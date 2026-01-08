@@ -1,0 +1,395 @@
+/**
+ * @fileoverview Type definitions for bee-threads (Browser).
+ *
+ * ## Why This File Exists
+ *
+ * Centralizes all TypeScript type definitions in one place. This enables:
+ * - Full IntelliSense support in IDEs
+ * - Compile-time type checking
+ * - Self-documenting code through type annotations
+ * - Easy type imports for library consumers
+ *
+ * ## What It Does
+ *
+ * - Defines pool configuration types (`PoolConfig`, `ConfigureOptions`)
+ * - Defines worker communication types (`WorkerMessage`, `WorkerResponse`)
+ * - Defines execution types (`ExecutionOptions`, `Priority`)
+ * - Defines cache types (`LRUCache`, `FunctionCache`)
+ * - Defines logger interface (compatible with console)
+ *
+ * ## Technical Decisions
+ *
+ * - Uses `as const` objects instead of TypeScript enums for better tree-shaking
+ * - Discriminated unions for message types enable exhaustive type checking
+ * - Logger interface is minimal but compatible with popular loggers
+ *
+ * @module bee-threads/types
+ */
+/** Type of worker pool */
+export type PoolType = "normal";
+/** Task priority levels */
+export type Priority = "high" | "normal" | "low";
+/** Resource limits for workers (browser doesn't support V8 limits directly) */
+export interface ResourceLimits {
+    maxOldGenerationSizeMb?: number;
+    maxYoungGenerationSizeMb?: number;
+    codeRangeSizeMb?: number;
+}
+/** Retry configuration */
+export interface RetryConfig {
+    enabled: boolean;
+    maxAttempts: number;
+    baseDelay: number;
+    maxDelay: number;
+    backoffFactor: number;
+}
+/** Security configuration (transparent - doesn't affect normal usage) */
+export interface SecurityConfig {
+    /**
+     * Maximum function source code size in bytes.
+     * Prevents DoS attacks via extremely large functions.
+     * @default 1048576 (1MB)
+     */
+    maxFunctionSize: number;
+    /**
+     * Block prototype pollution attacks.
+     * Prevents __proto__, constructor, prototype keys in context.
+     * @default true
+     */
+    blockPrototypePollution: boolean;
+}
+/** Global pool configuration */
+export interface PoolConfig {
+    poolSize: number;
+    minThreads: number;
+    maxQueueSize: number;
+    maxTemporaryWorkers: number;
+    workerIdleTimeout: number;
+    functionCacheSize: number;
+    lowMemoryMode: boolean;
+    resourceLimits: ResourceLimits;
+    retry: RetryConfig;
+    /**
+     * Debug mode - when enabled:
+     * - Includes function source code in error messages
+     * - More verbose error logging
+     * - Useful for development, disable in production
+     */
+    debugMode: boolean;
+    /**
+     * Logger instance for worker log forwarding.
+     * null = logging disabled
+     */
+    logger: Logger | null;
+    /**
+     * Security configuration for worker execution.
+     */
+    security: SecurityConfig;
+}
+/** User-configurable options (all optional) */
+export interface ConfigureOptions {
+    poolSize?: number;
+    minThreads?: number;
+    maxQueueSize?: number;
+    maxTemporaryWorkers?: number;
+    workerIdleTimeout?: number;
+    functionCacheSize?: number;
+    lowMemoryMode?: boolean;
+    resourceLimits?: ResourceLimits;
+    /**
+     * Debug mode - includes function source in errors for easier debugging.
+     */
+    debugMode?: boolean;
+    /**
+     * Custom logger instance (console, etc).
+     * Set to null to disable worker log forwarding.
+     * @default console
+     */
+    logger?: Logger | null;
+    /**
+     * Enable request coalescing (promise deduplication).
+     * When enabled, identical simultaneous calls share the same result.
+     * @default true
+     */
+    coalescing?: boolean;
+    /**
+     * Security options (transparent - doesn't affect normal usage).
+     */
+    security?: Partial<SecurityConfig>;
+}
+/** Worker entry in the pool */
+export interface WorkerEntry {
+    worker: Worker;
+    busy: boolean;
+    id: number;
+    tasksExecuted: number;
+    failedTasks: number;
+    totalExecutionTime: number;
+    temporary: boolean;
+    terminationTimer: ReturnType<typeof setTimeout> | null;
+    cachedFunctions: Set<string>;
+    messageHandler: ((e: MessageEvent) => void) | null;
+    errorHandler: ((e: ErrorEvent) => void) | null;
+}
+/** Worker info returned by pool operations */
+export interface WorkerInfo {
+    worker: Worker;
+    entry: WorkerEntry;
+    temporary: boolean;
+}
+/** Task waiting in queue */
+export interface QueuedTask {
+    fnString: string;
+    args: unknown[];
+    context: Record<string, unknown> | null;
+    transfer: ArrayBufferLike[];
+    resolve: (info: WorkerInfo) => void;
+    reject: (error: Error) => void;
+    priority: Priority;
+}
+/** Queues organized by priority */
+export interface PriorityQueues {
+    high: QueuedTask[];
+    normal: QueuedTask[];
+    low: QueuedTask[];
+}
+/** Options for task execution */
+export interface ExecutionOptions {
+    safe?: boolean;
+    timeout?: number | null;
+    poolType?: PoolType;
+    transfer?: ArrayBufferLike[];
+    signal?: AbortSignal | null;
+    context?: Record<string, unknown> | null;
+    priority?: Priority;
+    /** Skip request coalescing for this execution (for non-deterministic functions) */
+    skipCoalescing?: boolean;
+    /** Enable automatic Uint8Array reconstruction for worker results */
+    reconstructBuffers?: boolean;
+}
+/** Retry options for executor */
+export interface RetryOptions {
+    maxAttempts?: number;
+    baseDelay?: number;
+    maxDelay?: number;
+    backoffFactor?: number;
+}
+/**
+ * Message type constants for worker communication.
+ * Using const object instead of enum for better tree-shaking and runtime performance.
+ */
+export declare const MessageType: {
+    /** Successful task completion */
+    readonly SUCCESS: "success";
+    /** Task error */
+    readonly ERROR: "error";
+    /** Console log forwarding */
+    readonly LOG: "log";
+};
+/** Message type union */
+export type MessageTypeValue = (typeof MessageType)[keyof typeof MessageType];
+/** Log levels for console forwarding */
+export declare const LogLevel: {
+    readonly LOG: "log";
+    readonly WARN: "warn";
+    readonly ERROR: "error";
+    readonly INFO: "info";
+    readonly DEBUG: "debug";
+};
+export type LogLevelValue = (typeof LogLevel)[keyof typeof LogLevel];
+/** Message sent to worker */
+export interface WorkerMessage {
+    fn: string;
+    args: unknown[];
+    context?: Record<string, unknown> | null;
+}
+/** Serialized error for cross-thread transmission */
+export interface SerializedError {
+    name: string;
+    message: string;
+    stack?: string;
+    /** Original function source code (only in debug mode) */
+    _sourceCode?: string;
+    /** Error.cause (ES2022) - serialized recursively */
+    cause?: SerializedError;
+    /** AggregateError.errors - array of serialized errors */
+    errors?: SerializedError[];
+    /** Allow custom error properties to be serialized */
+    [key: string]: unknown;
+}
+/** Successful result from worker */
+export interface WorkerSuccessResponse {
+    type: typeof MessageType.SUCCESS;
+    value: unknown;
+}
+/** Error result from worker */
+export interface WorkerErrorResponse {
+    type: typeof MessageType.ERROR;
+    error: SerializedError;
+}
+/** Log message from worker */
+export interface WorkerLogMessage {
+    type: typeof MessageType.LOG;
+    level: LogLevelValue;
+    args: string[];
+}
+/** Worker response types (discriminated union) */
+export type WorkerResponse = WorkerSuccessResponse | WorkerErrorResponse | WorkerLogMessage;
+/** @deprecated Use WorkerSuccessResponse with type field instead */
+export interface LegacySuccessResponse {
+    ok: true;
+    value: unknown;
+}
+/** @deprecated Use WorkerErrorResponse with type field instead */
+export interface LegacyErrorResponse {
+    ok: false;
+    error: SerializedError;
+}
+/** Combined response type for backwards compatibility */
+export type WorkerResponseCompat = WorkerSuccessResponse | WorkerErrorResponse | WorkerLogMessage | LegacySuccessResponse | LegacyErrorResponse;
+/** Global execution metrics */
+export interface Metrics {
+    totalTasksExecuted: number;
+    totalTasksFailed: number;
+    totalRetries: number;
+    temporaryWorkersCreated: number;
+    activeTemporaryWorkers: number;
+    temporaryWorkerExecutionTime: number;
+    temporaryWorkerTasks: number;
+    affinityHits: number;
+    affinityMisses: number;
+}
+/** Pool counters */
+export interface PoolCounters {
+    busy: number;
+    idle: number;
+}
+/** Individual worker stats */
+export interface WorkerStats {
+    id: number;
+    busy: boolean;
+    tasksExecuted: number;
+    failedTasks: number;
+    avgExecutionTime: number;
+    temporary: boolean;
+    cachedFunctions: number;
+}
+/** Queue stats by priority */
+export interface QueueByPriority {
+    high: number;
+    normal: number;
+    low: number;
+}
+/** Pool-specific stats */
+export interface PoolStats {
+    size: number;
+    busy: number;
+    idle: number;
+    queued: number;
+    queueByPriority: QueueByPriority;
+    workers: WorkerStats[];
+}
+/** Complete pool statistics */
+export interface FullPoolStats {
+    maxSize: number;
+    normal: PoolStats;
+    config: {
+        poolSize: number;
+        minThreads: number;
+        maxQueueSize: number;
+        maxTemporaryWorkers: number;
+        workerIdleTimeout: number;
+        resourceLimits: ResourceLimits;
+        functionCacheSize: number;
+        lowMemoryMode: boolean;
+    };
+    metrics: Metrics & {
+        affinityHitRate: string;
+    };
+    coalescing: {
+        coalesced: number;
+        unique: number;
+        inFlight: number;
+        coalescingRate: string;
+    };
+}
+/** Any function that can be run in a worker */
+export type WorkerFunction<TArgs extends unknown[] = unknown[], TReturn = unknown> = (...args: TArgs) => TReturn;
+/** Async function for workers */
+export type AsyncWorkerFunction<TArgs extends unknown[] = unknown[], TReturn = unknown> = (...args: TArgs) => Promise<TReturn>;
+/** Successful safe result - status discriminates the union */
+export interface SafeFulfilled<T> {
+    status: "fulfilled";
+    value: T;
+}
+/** Failed safe result - status discriminates the union */
+export interface SafeRejected {
+    status: "rejected";
+    error: Error;
+}
+/**
+ * Discriminated union for safe mode results.
+ * Use with `status` property for type narrowing:
+ *
+ * @example
+ * const result = await execute(fn, args, { safe: true });
+ * if (result.status === 'fulfilled') {
+ *   console.log(result.value); // T
+ * } else {
+ *   console.log(result.error); // Error
+ * }
+ */
+export type SafeResult<T> = SafeFulfilled<T> | SafeRejected;
+/** LRU Cache interface */
+export interface LRUCache<T> {
+    get(key: string): T | undefined;
+    set(key: string, value: T, timeToLive?: number): void;
+    has(key: string): boolean;
+    delete(key: string, entry?: LRUCacheEntry<T>): void;
+    clear(): void;
+    size(): number;
+    stats(): {
+        size: number;
+        maxSize: number;
+        ttl: number | undefined;
+    };
+}
+export interface LRUCacheEntry<T> {
+    value: T;
+    expiresAt?: number | undefined;
+    timeoutId?: ReturnType<typeof setTimeout> | undefined;
+}
+/** Function cache stats */
+export interface FunctionCacheStats {
+    hits: number;
+    misses: number;
+    hitRate: string;
+    size: number;
+    maxSize: number;
+}
+/** Function cache interface */
+export interface FunctionCache {
+    getOrCompile(fnString: string, context?: Record<string, unknown> | null): Function;
+    clear(): void;
+    stats(): FunctionCacheStats;
+}
+/**
+ * Logger interface - compatible with console.
+ *
+ * @example
+ * // Use default (console)
+ * beeThreads.configure({ logger: console });
+ *
+ * // Disable logging
+ * beeThreads.configure({ logger: null });
+ */
+export interface Logger {
+    log(...args: unknown[]): void;
+    warn(...args: unknown[]): void;
+    error(...args: unknown[]): void;
+    info(...args: unknown[]): void;
+    debug(...args: unknown[]): void;
+}
+/** Noop logger for disabling logs */
+export declare const noopLogger: Logger;
+//# sourceMappingURL=types.d.ts.map

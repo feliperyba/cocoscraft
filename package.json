@@ -2,7 +2,7 @@
   "name": "CocosCraft",
   "uuid": "a4680fa1-01f2-4c03-a5ad-dc4eec02721d",
   "creator": {
-    "version": "3.8.1"
+    "version": "3.8.8"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.5.1",
@@ -14,6 +14,7 @@
     "eslint-plugin-simple-import-sort": "^10.0.0"
   },
   "dependencies": {
-    "mobx": "^6.11.0"
+    "mobx": "^6.11.0",
+    "bee-threads": "file:./assets/scripts/libs/bee-threads"
   }
 }

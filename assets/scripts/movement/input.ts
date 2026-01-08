@@ -1,5 +1,5 @@
 /* eslint-disable complexity */
-import { director, EventKeyboard, Game, game, Input, input, KeyCode } from 'cc';
+import { director, EventKeyboard, EventMouse, Game, game, Input, input, KeyCode } from 'cc';
 
 class InputMap {
     key = {
@@ -14,12 +14,48 @@ class InputMap {
         c: false,
     };
 
+    mouse = {
+        left: false,
+        right: false,
+        middle: false,
+    };
+
     rotation = 0;
     balls = null;
 
     registerEvents(): void {
         input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
         input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
+        input.on(Input.EventType.MOUSE_DOWN, this.onMouseDown, this);
+        input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
+    }
+
+    onMouseUp(event: EventMouse): void {
+        switch (event.getButton()) {
+            case 0:
+                this.mouse.left = false;
+                break;
+            case 1:
+                this.mouse.middle = false;
+                break;
+            case 2:
+                this.mouse.right = false;
+                break;
+        }
+    }
+
+    onMouseDown(event: EventMouse): void {
+        switch (event.getButton()) {
+            case 0:
+                this.mouse.left = true;
+                break;
+            case 1:
+                this.mouse.middle = true;
+                break;
+            case 2:
+                this.mouse.right = true;
+                break;
+        }
     }
 
     onKeyDown(event: EventKeyboard): void {
@@ -51,7 +87,7 @@ class InputMap {
                 this.key.c = true;
                 break;
             case KeyCode.KEY_F:
-                this.balls = director.getScene().getChildByName('Balls');
+                this.balls = director.getScene()!.getChildByName('Balls')!;
                 this.balls.active = !this.balls.active;
                 this.key.f = true;
                 break;
