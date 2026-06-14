@@ -260,7 +260,7 @@ export class PureWorld extends Component {
                             pn_remapValue_src: PureNoise.remapValue.toString(),
                             pn_redistribution_src: PureNoise.redistribution.toString(),
                             pn_generateChunkMeshPure_src: generateChunkMeshPure.toString(),
-                            BlockType: PureTerrain.BlockType,
+                            pn_blockType: PureTerrain.BlockType,
                         },
                     })
                     .map(PureTerrain.generateChunkDataPure);

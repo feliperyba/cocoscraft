@@ -10,6 +10,7 @@ declare const pn_generateDomainOffset_src: string;
 declare const pn_remapValue_src: string;
 declare const pn_redistribution_src: string;
 declare const pn_generateChunkMeshPure_src: string;
+declare const pn_blockType: typeof BlockType;
 
 export enum BlockType {
     Empty = 0,
@@ -122,7 +123,7 @@ export const generateChunkDataPure = (config: ChunkGenerationConfig): ChunkGener
         grad3,
     } = config;
 
-    const blocks = new Array<number>(chunkSize * chunkSize * chunkHeight).fill(BlockType.Empty);
+    const blocks = new Array<number>(chunkSize * chunkSize * chunkHeight).fill(pn_blockType.Empty);
 
     const getIndex = (lx: number, ly: number, lz: number): number => {
         return lx + chunkSize * ly + chunkSize * chunkHeight * lz;
@@ -173,10 +174,10 @@ export const generateChunkDataPure = (config: ChunkGenerationConfig): ChunkGener
             const hasStone = stoneNoise > stoneThreshold;
 
             for (let y = 0; y < chunkHeight; y++) {
-                let block = BlockType.Empty;
+                let block = pn_blockType.Empty;
 
                 if (y > surfaceHeight) {
-                    block = BlockType.Air;
+                    block = pn_blockType.Air;
                 } else if (y == surfaceHeight) {
                     block = surfaceBlockType;
                 } else {
@@ -202,11 +203,11 @@ export const generateChunkDataPure = (config: ChunkGenerationConfig): ChunkGener
             for (let y = 0; y < chunkHeight; y++) {
                 if (y > surfaceHeight && y <= waterHeight) {
                     const index = getIndex(x, y, z);
-                    if (blocks[index] === BlockType.Air) {
-                        setBlock(x, y, z, BlockType.Water);
+                    if (blocks[index] === pn_blockType.Air) {
+                        setBlock(x, y, z, pn_blockType.Water);
 
                         if (y == surfaceHeight + 1) {
-                            setBlock(x, y - 1, z, BlockType.Sand);
+                            setBlock(x, y - 1, z, pn_blockType.Sand);
                         }
                     }
                 }

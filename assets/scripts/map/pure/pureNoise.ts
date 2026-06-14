@@ -91,7 +91,7 @@ export const octavePerlin = (
 
     for (let i = 0; i < settings.octaves; i++) {
         total +=
-            simplexNoise(
+            (globalThis as any).simplexNoise(
                 (settings.offset.x + settings.worldOffset.x + x) * frequency,
                 (settings.offset.y + settings.worldOffset.y + z) * frequency,
                 perm,
@@ -122,8 +122,8 @@ export const generateDomainOffset = (
     perm: number[],
     grad3: number[][]
 ): Vec2Like => {
-    const noiseX = octavePerlin(x, z, settings.noiseDomainX, perm, grad3) * settings.amplitudeX;
-    const noiseY = octavePerlin(x, z, settings.noiseDomainY, perm, grad3) * settings.amplitudeY;
+    const noiseX = (globalThis as any).octavePerlin(x, z, settings.noiseDomainX, perm, grad3) * settings.amplitudeX;
+    const noiseY = (globalThis as any).octavePerlin(x, z, settings.noiseDomainY, perm, grad3) * settings.amplitudeY;
 
     return { x: noiseX, y: noiseY };
 };
@@ -136,6 +136,18 @@ export const generateDomainNoise = (
     perm: number[],
     grad3: number[][]
 ): number => {
-    const domainOffset = generateDomainOffset(x, z, domainSettings, perm, grad3);
-    return octavePerlin(x + domainOffset.x, z + domainOffset.y, defaultNoiseSettings, perm, grad3);
+    const domainOffset = (globalThis as any).generateDomainOffset(x, z, domainSettings, perm, grad3);
+    return (globalThis as any).octavePerlin(x + domainOffset.x, z + domainOffset.y, defaultNoiseSettings, perm, grad3);
 };
+
+// Register on globalThis for worker serialization compatibility.
+// When functions are individually compiled via new Function() in the worker,
+// cross-references resolve through globalThis instead of minified module bindings.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const _g = globalThis as any;
+_g.simplexNoise = simplexNoise;
+_g.octavePerlin = octavePerlin;
+_g.remapValue = remapValue;
+_g.redistribution = redistribution;
+_g.generateDomainOffset = generateDomainOffset;
+_g.generateDomainNoise = generateDomainNoise;
