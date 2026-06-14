@@ -182,9 +182,9 @@ export class DigController extends Component {
         
         this.crackOverlay.active = true;
         this.crackOverlay.setWorldPosition(
-            this.currentBreak.blockWorldPosition.x + 0.5,
-            this.currentBreak.blockWorldPosition.y + 0.5,
-            this.currentBreak.blockWorldPosition.z + 0.5
+            this.currentBreak.blockWorldPosition.x,
+            this.currentBreak.blockWorldPosition.y,
+            this.currentBreak.blockWorldPosition.z
         );
         */
     }

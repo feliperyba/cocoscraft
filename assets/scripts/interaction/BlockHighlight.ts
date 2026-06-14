@@ -1,4 +1,4 @@
-import { _decorator, Camera, Color, Component, Material, MeshRenderer, Node, primitives, Quat, utils } from 'cc';
+import { _decorator, Camera, Color, Component, Material, MeshRenderer, Node, primitives, Quat, utils, Vec3 } from 'cc';
 
 import { BlockType } from '../map/models';
 import { World } from '../map/world';
@@ -9,7 +9,7 @@ const { ccclass, property, type } = _decorator;
 @ccclass('BlockHighlight')
 export class BlockHighlight extends Component {
     @property(Node)
-    highlightCube!: Node; // Wireframe cube prefab
+    highlightCube!: Node;
 
     @type(BlockRaycaster)
     raycaster!: BlockRaycaster;
@@ -20,10 +20,14 @@ export class BlockHighlight extends Component {
     @type(Camera)
     camera!: Camera;
 
+    private buildPreviewCube!: Node;
+
     start(): void {
         if (!this.highlightCube) {
-            this.createDefaultHighlight();
+            this.highlightCube = this.createCube('HighlightCube', new Color(0, 255, 255, 120));
         }
+
+        this.buildPreviewCube = this.createCube('BuildPreviewCube', new Color(100, 255, 100, 60));
     }
 
     protected onLoad(): void {
@@ -33,38 +37,26 @@ export class BlockHighlight extends Component {
         }
     }
 
-    private createDefaultHighlight(): void {
-        // Create a node for the highlight
-        this.highlightCube = new Node('HighlightCube');
+    private createCube(name: string, color: Color): Node {
+        const node = new Node(name);
 
         if (this.node.scene) {
-            this.node.scene.addChild(this.highlightCube);
+            this.node.scene.addChild(node);
         } else {
-            this.node.addChild(this.highlightCube);
+            this.node.addChild(node);
         }
 
-        // Add mesh renderer
-        const meshRenderer = this.highlightCube.addComponent(MeshRenderer);
-
-        const size = 1.01;
-        const mesh = utils.MeshUtils.createMesh(primitives.box({ width: size, height: size, length: size }));
+        const meshRenderer = node.addComponent(MeshRenderer);
+        const mesh = utils.MeshUtils.createMesh(primitives.box({ width: 1.01, height: 1.01, length: 1.01 }));
         meshRenderer.mesh = mesh;
+
         const material = new Material();
-        material.initialize({
-            effectName: 'builtin-unlit',
-            technique: 1,
-        });
-
+        material.initialize({ effectName: 'builtin-unlit', technique: 1 });
         meshRenderer.material = material;
-
-        // Set color to semi-transparent white/cyan
-        const alpha = 100;
-        const color = new Color(0, 255, 255, alpha); // Cyan highlight
-
-        // For unlit, property is usually 'mainColor'
         material.setProperty('mainColor', color);
 
-        this.highlightCube.active = false;
+        node.active = false;
+        return node;
     }
 
     update(): void {
@@ -72,14 +64,28 @@ export class BlockHighlight extends Component {
 
         if (hit && hit.blockType !== BlockType.Air && hit.blockType !== BlockType.Empty) {
             this.highlightCube.active = true;
-            this.highlightCube.setWorldPosition(
-                hit.blockWorldPosition.x,
-                hit.blockWorldPosition.y,
-                hit.blockWorldPosition.z
-            );
+            this.highlightCube.setWorldPosition(hit.blockWorldPosition);
             this.highlightCube.setWorldRotation(Quat.IDENTITY);
+
+            const placePos = new Vec3(
+                hit.blockWorldPosition.x + hit.hitNormal.x,
+                hit.blockWorldPosition.y + hit.hitNormal.y,
+                hit.blockWorldPosition.z + hit.hitNormal.z,
+            );
+            this.buildPreviewCube.active = true;
+            this.buildPreviewCube.setWorldPosition(placePos);
+            this.buildPreviewCube.setWorldRotation(Quat.IDENTITY);
         } else {
             this.highlightCube.active = false;
+
+            const airTarget = this.raycaster.getAirPlacementTarget(this.camera, this.world);
+            if (airTarget) {
+                this.buildPreviewCube.active = true;
+                this.buildPreviewCube.setWorldPosition(airTarget);
+                this.buildPreviewCube.setWorldRotation(Quat.IDENTITY);
+            } else {
+                this.buildPreviewCube.active = false;
+            }
         }
     }
 }

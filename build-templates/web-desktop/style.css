@@ -1,0 +1,27 @@
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+}
+
+#GameDiv {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+#Cocos3dGameContainer, #GameCanvas {
+    width: 100%;
+    height: 100%;
+}
+
+.header, .footer {
+    display: none !important;
+}

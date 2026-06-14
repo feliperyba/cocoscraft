@@ -6,7 +6,6 @@ import {
     CharacterControllerContact,
     clamp,
     Component,
-    lerp,
     PhysicsSystem,
     Vec3,
 } from 'cc';
@@ -52,8 +51,6 @@ export class CharacterFps extends Component {
     private playerVelocity = new Vec3(0, 0, 0);
 
     private currentSpeed = 0;
-    private tempRotation = 0;
-    private targetRotation = 0;
 
     protected onLoad(): void {
         this.characterCtrl.on('onControllerColliderHit', this.onControllerColliderHit, this);
@@ -143,9 +140,6 @@ export class CharacterFps extends Component {
 
         this.playerVelocity.x *= this.linearDamping;
         this.playerVelocity.z *= this.linearDamping;
-
-        this.tempRotation = lerp(this.tempRotation, this.targetRotation, deltaTime * 10);
-        this.node.eulerAngles = this.tempVec3.set(0, this.tempRotation, 0);
 
         // Create a new movement vector based on the character's input
         this.movement = Vec3.multiplyScalar(this.movement, this.playerVelocity, deltaTime);

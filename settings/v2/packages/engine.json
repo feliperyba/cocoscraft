@@ -18,7 +18,7 @@
             "_value": true
           },
           "gfx-webgpu": {
-            "_value": false
+            "_value": true
           },
           "animation": {
             "_value": false
@@ -203,10 +203,12 @@
           "affine-transform",
           "base",
           "custom-pipeline",
+          "custom-pipeline-post-process",
           "debug-renderer",
           "geometry-renderer",
           "gfx-webgl",
           "gfx-webgl2",
+          "gfx-webgpu",
           "graphics",
           "light-probe",
           "marionette",

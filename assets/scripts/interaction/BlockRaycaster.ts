@@ -1,4 +1,4 @@
-import { _decorator, Camera, Component, geometry, PhysicsRayResult, PhysicsSystem, Vec2, Vec3, view } from 'cc';
+import { _decorator, Camera, Component, geometry, PhysicsRayResult, PhysicsSystem, Vec3 } from 'cc';
 
 import { Chunk } from '../map/chunk';
 import { ChunkData } from '../map/chunkData';
@@ -10,36 +10,34 @@ const { ccclass, property } = _decorator;
 
 export interface BlockHitResult {
     hit: boolean;
-    blockWorldPosition: Vec3; // World position of hit block
-    blockLocalPosition: Vec3; // Local position within chunk
-    chunkData: ChunkData; // Reference to chunk
-    blockType: BlockType; // Type of block hit
-    hitNormal: Vec3; // Surface normal (for build placement)
-    hitPoint: Vec3; // Exact hit point
+    blockWorldPosition: Vec3;
+    blockLocalPosition: Vec3;
+    chunkData: ChunkData;
+    blockType: BlockType;
+    hitNormal: Vec3;
+    hitPoint: Vec3;
 }
 
 @ccclass('BlockRaycaster')
 export class BlockRaycaster extends Component {
     @property
-    maxDistance = 5; // Max reach distance in blocks
+    maxDistance = 5;
+
+    @property
+    airPlaceDistance = 3.5;
 
     private ray = new geometry.Ray();
 
-    /**
-     * Cast ray from camera through screen center (crosshair)
-     * @returns BlockHitResult or null if no block hit
-     */
     raycastBlock(camera: Camera, world: World): BlockHitResult | null {
         this.ray.o.set(camera.node.worldPosition);
         const forward = new Vec3();
         Vec3.transformQuat(forward, Vec3.FORWARD, camera.node.worldRotation);
         this.ray.d.set(forward);
 
-        // 2. Perform raycast against chunk colliders
         if (
             PhysicsSystem.instance.raycastClosest(
                 this.ray,
-                1 << 0, // Layer mask for terrain. Assuming DEFAULT layer (0) or similar.
+                1 << 0,
                 this.maxDistance
             )
         ) {
@@ -50,19 +48,51 @@ export class BlockRaycaster extends Component {
         return null;
     }
 
+    /**
+     * Compute a floating air placement target at a fixed distance
+     * along the camera forward direction.
+     */
+    getAirPlacementTarget(camera: Camera, world: World): Vec3 | null {
+        const origin = camera.node.worldPosition;
+        const forward = new Vec3();
+        Vec3.transformQuat(forward, Vec3.FORWARD, camera.node.worldRotation);
+
+        const target = new Vec3(
+            Math.round(origin.x + forward.x * this.airPlaceDistance),
+            Math.round(origin.y + forward.y * this.airPlaceDistance),
+            Math.round(origin.z + forward.z * this.airPlaceDistance),
+        );
+
+        const blockType = this.getBlockTypeAt(world, target.x, target.y, target.z);
+        if (blockType !== BlockType.Air && blockType !== BlockType.Empty) return null;
+
+        return target;
+    }
+
+    private getBlockTypeAt(world: World, x: number, y: number, z: number): BlockType {
+        const chunkPos = Chunk.chunkPositionFromBlockCoords(world, x, y, z);
+        const chunkData = world.worldData.chunkDataDictionary.get(parseVec3ToInt(chunkPos));
+        if (!chunkData) return BlockType.Empty;
+
+        const localPos = new Vec3(
+            x - chunkPos.x,
+            y - chunkPos.y,
+            z - chunkPos.z,
+        );
+
+        return Chunk.getBlockFromChunkCoordinatesVec3(chunkData, localPos);
+    }
+
     private processHit(result: PhysicsRayResult, world: World): BlockHitResult | null {
-        // Convert hit point to block coordinates
-        // Offset slightly into the block using the normal
         const hitPoint = result.hitPoint;
         const normal = result.hitNormal;
 
         const blockWorldPos = new Vec3(
-            Math.floor(hitPoint.x - normal.x * 0.01),
-            Math.floor(hitPoint.y - normal.y * 0.01),
-            Math.floor(hitPoint.z - normal.z * 0.01)
+            Math.round(hitPoint.x - normal.x * 0.01),
+            Math.round(hitPoint.y - normal.y * 0.01),
+            Math.round(hitPoint.z - normal.z * 0.01),
         );
 
-        // Find which chunk this block belongs to
         const chunkPos = Chunk.chunkPositionFromBlockCoords(world, blockWorldPos.x, blockWorldPos.y, blockWorldPos.z);
 
         const chunkData = world.worldData.chunkDataDictionary.get(parseVec3ToInt(chunkPos));
@@ -72,7 +102,7 @@ export class BlockRaycaster extends Component {
         const localPos = new Vec3(
             blockWorldPos.x - chunkPos.x,
             blockWorldPos.y - chunkPos.y,
-            blockWorldPos.z - chunkPos.z
+            blockWorldPos.z - chunkPos.z,
         );
 
         const blockType = Chunk.getBlockFromChunkCoordinatesVec3(chunkData, localPos);

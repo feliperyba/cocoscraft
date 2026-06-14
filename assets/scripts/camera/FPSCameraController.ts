@@ -34,26 +34,22 @@ export class FPSCameraController extends Component {
 
     start(): void {
         input.on(Input.EventType.MOUSE_MOVE, this.onMouseMove, this);
-
         document.addEventListener('pointerlockchange', this.onPointerChange, false);
-        input.on(Input.EventType.MOUSE_DOWN, this.onMouseDown, this);
+        game.canvas?.addEventListener('click', this.onCanvasClick, false);
     }
 
-    onPointerChange(): void {
-        if (document.pointerLockElement === game.canvas) {
-            this.pointerLock = true;
-            return;
-        }
+    private onPointerChange = (): void => {
+        this.pointerLock = document.pointerLockElement === game.canvas;
+    };
 
-        setTimeout(() => {
-            this.pointerLock = false;
-        }, 2);
-    }
-
-    onMouseDown(): void {
+    private onCanvasClick = (): void => {
         if (this.pointerLock) return;
+
+        const active = document.activeElement as HTMLElement | null;
+        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
+
         game.canvas?.requestPointerLock?.();
-    }
+    };
 
     onMouseMove(event: EventMouse): void {
         this.angleVec.y -= event.getDeltaX() / this.angleSpeed;
@@ -77,8 +73,7 @@ export class FPSCameraController extends Component {
 
     protected onDestroy(): void {
         input.off(Input.EventType.MOUSE_MOVE, this.onMouseMove, this);
-
         document.removeEventListener('pointerlockchange', this.onPointerChange, false);
-        input.on(Input.EventType.MOUSE_DOWN, this.onMouseDown, this);
+        game.canvas?.removeEventListener('click', this.onCanvasClick, false);
     }
 }

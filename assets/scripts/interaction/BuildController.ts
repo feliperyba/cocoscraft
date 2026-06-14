@@ -48,17 +48,20 @@ export class BuildController extends Component {
 
     attemptPlace(): void {
         const hit = this.raycaster.raycastBlock(this.camera, this.world);
-        if (!hit) return;
 
-        // Calculate placement position (adjacent to hit face)
-        const placePos = new Vec3(
-            hit.blockWorldPosition.x + hit.hitNormal.x,
-            hit.blockWorldPosition.y + hit.hitNormal.y,
-            hit.blockWorldPosition.z + hit.hitNormal.z
-        );
+        let placePos: Vec3 | null = null;
 
-        // Validate placement (not inside player, valid chunk, etc.)
-        if (!this.canPlace(placePos)) return;
+        if (hit && hit.blockType !== BlockType.Air && hit.blockType !== BlockType.Empty) {
+            placePos = new Vec3(
+                hit.blockWorldPosition.x + hit.hitNormal.x,
+                hit.blockWorldPosition.y + hit.hitNormal.y,
+                hit.blockWorldPosition.z + hit.hitNormal.z,
+            );
+        } else {
+            placePos = this.raycaster.getAirPlacementTarget(this.camera, this.world);
+        }
+
+        if (!placePos) return;
 
         // Find target chunk
         const chunkPos = Chunk.chunkPositionFromBlockCoords(this.world, placePos.x, placePos.y, placePos.z);
