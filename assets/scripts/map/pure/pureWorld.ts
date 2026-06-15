@@ -130,6 +130,7 @@ export class PureWorld extends Component {
                 indices: meshData.triangles,
                 uvs: meshData.uv.flatMap(uv => [uv.x, uv.y]),
                 normals: [], // Will be calculated by renderer
+                colors: meshData.colors ?? [],
                 collisionVertices: meshData.collisionVertices.flatMap(v => [v.x, v.y, v.z]),
                 collisionIndices: meshData.collisionTriangles,
                 waterMesh: meshData.waterMesh
@@ -138,6 +139,7 @@ export class PureWorld extends Component {
                           indices: meshData.waterMesh.triangles,
                           uvs: meshData.waterMesh.uv.flatMap(uv => [uv.x, uv.y]),
                           normals: [],
+                          colors: [],
                           collisionVertices: [],
                           collisionIndices: [],
                       }

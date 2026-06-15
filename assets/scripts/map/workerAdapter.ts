@@ -134,6 +134,7 @@ export function convertPureMeshData(pure: PureMeshData): MeshData {
     }
 
     mesh.triangles = pure.indices;
+    mesh.colors = pure.colors;
 
     for (let i = 0; i < pure.uvs.length; i += 2) {
         mesh.uv.push(new Vec2(pure.uvs[i], pure.uvs[i + 1]));

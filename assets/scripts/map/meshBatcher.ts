@@ -74,6 +74,7 @@ export class MeshBatcher {
             indices: [],
             uvs: [],
             normals: [],
+            colors: [],
             collisionVertices: [],
             collisionIndices: [],
         };
@@ -109,6 +110,9 @@ export class MeshBatcher {
 
         // Copy normals directly (no offset needed)
         batch.normals.push(...mesh.normals);
+
+        // Copy colors directly (no offset needed)
+        batch.colors.push(...mesh.colors);
 
         // Add collision vertices with world offset
         const baseCollisionVertexIndex = batch.collisionVertices.length / this.vec3Size;
@@ -161,6 +165,7 @@ export class MeshBatcher {
             indices16: new Uint16Array(batch.indices),
             normals: new Float32Array(batch.normals),
             uvs: new Float32Array(batch.uvs),
+            colors: batch.colors.length > 0 ? new Float32Array(batch.colors) : undefined,
         };
 
         // Check if existing mesh can handle the new data

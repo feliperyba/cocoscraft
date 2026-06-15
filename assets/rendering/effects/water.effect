@@ -1,0 +1,154 @@
+CCEffect %{
+  techniques:
+  - name: transparent
+    passes:
+    - vert: water-vs
+      frag: water-fs
+      embeddedMacros: { CC_FORCE_FORWARD_SHADING: true }
+      depthStencilState: { depthTest: true, depthWrite: false }
+      blendState:
+        targets:
+        - { blend: true, blendSrc: src_alpha, blendDst: one_minus_src_alpha,
+            blendDstAlpha: one_minus_src_alpha }
+      properties:
+        mainColor:        { value: [0.05, 0.35, 0.55, 0.75], linear: true, target: albedo,
+                            editor: { displayName: Water Color, type: color } }
+        deepColor:        { value: [0.02, 0.15, 0.30, 1.0], linear: true, target: deepColor,
+                            editor: { displayName: Deep Color, type: color } }
+        shallowColor:     { value: [0.15, 0.55, 0.70, 1.0], linear: true, target: shallowColor,
+                            editor: { displayName: Shallow Color, type: color } }
+        foamColor:        { value: [0.85, 0.92, 0.98, 1.0], linear: true, target: foamColor,
+                            editor: { displayName: Foam Color, type: color } }
+        mainTexture:      { value: white, target: albedoMap,
+                            editor: { displayName: Surface Texture } }
+        waveSpeed:        { value: 1.0, target: waveParams.x,
+                            editor: { displayName: Wave Speed, slide: true, range: [0, 5], step: 0.1 } }
+        fresnelPower:     { value: 3.0, target: waveParams.z,
+                            editor: { displayName: Fresnel Power, slide: true, range: [0.5, 8], step: 0.1 } }
+        specShininess:    { value: 128.0, target: waveParams.w,
+                            editor: { displayName: Spec Shininess, slide: true, range: [1, 256], step: 1 } }
+        roughness:        { value: 0.05, target: pbrParams.y }
+        metallic:         { value: 0.0, target: pbrParams.z }
+        specularIntensity: { value: 1.0, target: pbrParams.w }
+
+    - vert: water-vs
+      frag: water-fs
+      phase: forward-add
+      embeddedMacros: { CC_FORWARD_ADD: true }
+      depthStencilState: { depthFunc: equal, depthTest: true, depthWrite: false }
+      blendState:
+        targets:
+        - { blend: true, blendSrc: one, blendDst: one }
+
+    - vert: water-shadow-vs
+      frag: water-shadow-fs
+      phase: shadow-caster
+      rasterizerState: { cullMode: front }
+}%
+
+CCProgram shared-ubos %{
+  uniform Constants {
+    vec4 tilingOffset;
+    vec4 albedo;
+    vec4 albedoScaleAndCutoff;
+    vec4 pbrParams;
+    vec4 emissive;
+    vec4 emissiveScaleParam;
+    vec4 deepColor;
+    vec4 shallowColor;
+    vec4 foamColor;
+    vec4 waveParams;
+  };
+}%
+
+CCProgram macro-remapping %{
+  #pragma define-meta USE_VERTEX_COLOR
+  #define CC_SURFACES_USE_VERTEX_COLOR USE_VERTEX_COLOR
+}%
+
+CCProgram surface-fragment %{
+  #if USE_ALBEDO_MAP
+    uniform sampler2D albedoMap;
+  #endif
+
+  #define CC_SURFACES_FRAGMENT_MODIFY_BASECOLOR_AND_TRANSPARENCY
+  vec4 SurfacesFragmentModifyBaseColorAndTransparency() {
+    vec3 viewDir = normalize(cc_cameraPos.xyz - FSInput_worldPos);
+    vec3 nrm = normalize(FSInput_worldNormal);
+    float fresnel = pow(1.0 - max(dot(viewDir, nrm), 0.0), waveParams.z);
+    fresnel = clamp(fresnel * 1.5, 0.0, 1.0);
+    vec3 waterCol = mix(shallowColor.rgb, deepColor.rgb, fresnel);
+
+    float t = cc_time.x * waveParams.x;
+    vec2 uv1 = FSInput_worldPos.xz * 0.35 + vec2(t * 0.15, t * 0.1);
+    vec2 uv2 = FSInput_worldPos.xz * 0.2 + vec2(-t * 0.08, t * 0.12);
+    float ripple = sin(uv1.x * 6.0) * sin(uv1.y * 6.0) * 0.5
+                 + sin(uv2.x * 4.0) * sin(uv2.y * 4.0) * 0.5;
+    waterCol += vec3(ripple * 0.04);
+
+    #if USE_ALBEDO_MAP
+      vec2 scrollUV = FSInput_texcoord;
+      vec4 texC = texture(albedoMap, scrollUV);
+      texC.rgb = SRGBToLinear(texC.rgb);
+      waterCol *= (0.8 + texC.rgb * 0.4);
+    #endif
+
+    float alpha = mix(albedo.a, 0.92, fresnel);
+    return vec4(waterCol, alpha);
+  }
+
+  #define CC_SURFACES_FRAGMENT_MODIFY_PBRPARAMS
+  vec4 SurfacesFragmentModifyPBRParams() {
+    return vec4(1.0, pbrParams.y, pbrParams.z, pbrParams.w);
+  }
+
+  #define CC_SURFACES_FRAGMENT_MODIFY_EMISSIVE
+  vec3 SurfacesFragmentModifyEmissive() {
+    vec3 viewDir = normalize(cc_cameraPos.xyz - FSInput_worldPos);
+    vec3 nrm = normalize(FSInput_worldNormal);
+    vec3 sunDir = normalize(cc_mainLitDir.xyz);
+    vec3 refl = reflect(-sunDir, nrm);
+    float spec = pow(max(dot(viewDir, refl), 0.0), waveParams.w);
+    return foamColor.rgb * spec * 2.0;
+  }
+}%
+
+CCProgram water-vs %{
+  precision highp float;
+  #include <macro-remapping>
+  #include <surfaces/effect-macros/common-macros>
+  #include <surfaces/includes/common-vs>
+  #include <shared-ubos>
+  #include <surfaces/includes/standard-vs>
+  #include <shading-entries/main-functions/render-to-scene/vs>
+}%
+
+CCProgram water-shadow-vs %{
+  precision highp float;
+  #include <macro-remapping>
+  #include <surfaces/effect-macros/render-to-shadowmap>
+  #include <surfaces/includes/common-vs>
+  #include <shared-ubos>
+  #include <shading-entries/main-functions/render-to-shadowmap/vs>
+}%
+
+CCProgram water-fs %{
+  precision highp float;
+  #include <macro-remapping>
+  #include <surfaces/effect-macros/common-macros>
+  #include <surfaces/includes/common-fs>
+  #include <shared-ubos>
+  #include <surface-fragment>
+  #include <lighting-models/includes/standard>
+  #include <surfaces/includes/standard-fs>
+  #include <shading-entries/main-functions/render-to-scene/fs>
+}%
+
+CCProgram water-shadow-fs %{
+  precision highp float;
+  #include <macro-remapping>
+  #include <surfaces/effect-macros/render-to-shadowmap>
+  #include <surfaces/includes/common-fs>
+  #include <shared-ubos>
+  #include <shading-entries/main-functions/render-to-shadowmap/fs>
+}%

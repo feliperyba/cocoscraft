@@ -50,6 +50,7 @@ export interface PureMeshData {
     indices: number[];
     uvs: number[]; // u,v flattened
     normals: number[]; // x,y,z flattened - pre-calculated in worker
+    colors: number[]; // r,g,b,a flattened - per-vertex AO + face brightness
     collisionVertices: number[];
     collisionIndices: number[];
     waterMesh?: PureMeshData;
@@ -183,6 +184,28 @@ export const generateChunkMeshPure = (config: MeshGenerationConfig): PureMeshDat
         ],
     ];
 
+    // Per-face brightness (subtle — values are in sRGB, will be linearized by shader)
+    const FACE_BRIGHTNESS = [0.97, 0.97, 1.0, 0.93, 0.95, 0.95]; // F, B, Up, Down, R, L
+
+    const AO_LEVELS = [0.88, 0.94, 0.97, 1.0];
+
+    // AO neighbor offsets: for each face dir, for each vertex [0-3],
+    // offsets for [side1, side2, corner] relative to the block in the face normal direction
+    const aoNeighborOffsets: number[][][][] = [
+        // Forward (z+): perpendicular axes x,y, normal z+1
+        [[[1,0,1],[0,-1,1],[1,-1,1]],[[1,0,1],[0,1,1],[1,1,1]],[[-1,0,1],[0,1,1],[-1,1,1]],[[-1,0,1],[0,-1,1],[-1,-1,1]]],
+        // Back (z-): perpendicular axes x,y, normal z-1
+        [[[-1,0,-1],[0,-1,-1],[-1,-1,-1]],[[-1,0,-1],[0,1,-1],[-1,1,-1]],[[1,0,-1],[0,1,-1],[1,1,-1]],[[1,0,-1],[0,-1,-1],[1,-1,-1]]],
+        // Up (y+): perpendicular axes x,z, normal y+1
+        [[[-1,1,0],[0,1,1],[-1,1,1]],[[1,1,0],[0,1,1],[1,1,1]],[[1,1,0],[0,1,-1],[1,1,-1]],[[-1,1,0],[0,1,-1],[-1,1,-1]]],
+        // Down (y-): perpendicular axes x,z, normal y-1
+        [[[-1,-1,0],[0,-1,-1],[-1,-1,-1]],[[1,-1,0],[0,-1,-1],[1,-1,-1]],[[1,-1,0],[0,-1,1],[1,-1,1]],[[-1,-1,0],[0,-1,1],[-1,-1,1]]],
+        // Right (x+): perpendicular axes y,z, normal x+1
+        [[[1,-1,0],[1,0,-1],[1,-1,-1]],[[1,1,0],[1,0,-1],[1,1,-1]],[[1,1,0],[1,0,1],[1,1,1]],[[1,-1,0],[1,0,1],[1,-1,1]]],
+        // Left (x-): perpendicular axes y,z, normal x-1
+        [[[-1,-1,0],[-1,0,1],[-1,-1,1]],[[-1,1,0],[-1,0,1],[-1,1,1]],[[-1,1,0],[-1,0,-1],[-1,1,-1]],[[-1,-1,0],[-1,0,-1],[-1,-1,-1]]],
+    ];
+
     /**
      * Adds a quad to the mesh data
      */
@@ -195,19 +218,43 @@ export const generateChunkMeshPure = (config: MeshGenerationConfig): PureMeshDat
         blockDef: BlockDefinition,
         tileSizeX: number,
         tileSizeY: number,
-        textureOffset: number
+        textureOffset: number,
+        aoValues?: [number, number, number, number]
     ): void => {
         const v = vertexLookups[dir];
 
         const startIndex = mesh.vertices.length / VEC3_SIZE;
-        mesh.indices.push(
-            startIndex,
-            startIndex + IDX_1,
-            startIndex + IDX_2,
-            startIndex,
-            startIndex + IDX_2,
-            startIndex + IDX_3
-        );
+
+        // Compute AO-based vertex colors (face brightness * AO level)
+        const faceBrightness = FACE_BRIGHTNESS[dir];
+        const aoColors: number[] = [];
+        if (aoValues) {
+            for (let i = 0; i < 4; i++) {
+                const brightness = faceBrightness * AO_LEVELS[aoValues[i]];
+                aoColors.push(brightness, brightness, brightness, 1.0);
+            }
+            // Flip triangulation if AO anisotropy requires it
+            if (aoValues[0] + aoValues[2] < aoValues[1] + aoValues[3]) {
+                mesh.indices.push(
+                    startIndex, startIndex + IDX_1, startIndex + IDX_3,
+                    startIndex + IDX_1, startIndex + IDX_2, startIndex + IDX_3
+                );
+            } else {
+                mesh.indices.push(
+                    startIndex, startIndex + IDX_1, startIndex + IDX_2,
+                    startIndex, startIndex + IDX_2, startIndex + IDX_3
+                );
+            }
+        } else {
+            mesh.indices.push(
+                startIndex,
+                startIndex + IDX_1,
+                startIndex + IDX_2,
+                startIndex,
+                startIndex + IDX_2,
+                startIndex + IDX_3
+            );
+        }
 
         for (let i = 0; i < v.length; i++) {
             const vert = v[i];
@@ -252,6 +299,14 @@ export const generateChunkMeshPure = (config: MeshGenerationConfig): PureMeshDat
             u1,
             v1 // TR (vertex 3)
         );
+
+        // Push vertex colors (AO + face brightness)
+        if (aoColors.length > 0) {
+            mesh.colors.push(...aoColors);
+        } else {
+            const b = faceBrightness;
+            mesh.colors.push(b, b, b, 1.0, b, b, b, 1.0, b, b, b, 1.0, b, b, b, 1.0);
+        }
     };
 
     const { blocks, chunkSize, chunkHeight, tileSizeX, tileSizeY, textureOffset, blockDefinitions } = config;
@@ -324,6 +379,7 @@ export const generateChunkMeshPure = (config: MeshGenerationConfig): PureMeshDat
         indices: [],
         uvs: [],
         normals: [],
+        colors: [],
         collisionVertices: [],
         collisionIndices: [],
     };
@@ -332,6 +388,7 @@ export const generateChunkMeshPure = (config: MeshGenerationConfig): PureMeshDat
         indices: [],
         uvs: [],
         normals: [],
+        colors: [],
         collisionVertices: [],
         collisionIndices: [],
     };
@@ -344,6 +401,13 @@ export const generateChunkMeshPure = (config: MeshGenerationConfig): PureMeshDat
         { dir: directions.right, vec: [1, 0, 0] },
         { dir: directions.left, vec: [-1, 0, 0] },
     ];
+
+    // Check if a block type contributes to AO (solid and not water/air)
+    const isBlockSolidForAO = (blockType: number): number => {
+        if (blockType === 0 || blockType === BLOCK_AIR || blockType === BLOCK_WATER) return 0;
+        const def = blockDefinitions[blockType];
+        return (def && def.isSolid) ? 1 : 0;
+    };
 
     for (let x = 0; x < chunkSize; x++) {
         for (let y = 0; y < chunkHeight; y++) {
@@ -369,7 +433,21 @@ export const generateChunkMeshPure = (config: MeshGenerationConfig): PureMeshDat
                     const isVisibleBoundary = neighborType !== 0 && !isNeighbourSolid;
 
                     if (!isWater && isVisibleBoundary) {
-                        addQuad(mainMesh, x, y, z, dir, def, tileSizeX, tileSizeY, textureOffset);
+                        // Compute per-vertex AO for this face
+                        const aoOffsets = aoNeighborOffsets[dir];
+                        const aoValues: [number, number, number, number] = [3, 3, 3, 3];
+                        for (let vi = 0; vi < 4; vi++) {
+                            const offsets = aoOffsets[vi];
+                            const side1 = isBlockSolidForAO(getNeighborBlock(x, y, z, offsets[0]));
+                            const side2 = isBlockSolidForAO(getNeighborBlock(x, y, z, offsets[1]));
+                            const corner = isBlockSolidForAO(getNeighborBlock(x, y, z, offsets[2]));
+                            if (side1 && side2) {
+                                aoValues[vi] = 0;
+                            } else {
+                                aoValues[vi] = 3 - (side1 + side2 + corner);
+                            }
+                        }
+                        addQuad(mainMesh, x, y, z, dir, def, tileSizeX, tileSizeY, textureOffset, aoValues);
                     }
                 }
             }

@@ -7,6 +7,7 @@ export class MeshData {
     vertices: Vec3[] = [];
     triangles: number[] = [];
     uv: Vec2[] = [];
+    colors: number[] = [];
 
     collisionVertices: Vec3[] = [];
     collisionTriangles: number[] = [];

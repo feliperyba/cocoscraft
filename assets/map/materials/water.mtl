@@ -5,13 +5,14 @@
   "__editorExtras__": {},
   "_native": "",
   "_effectAsset": {
-    "__uuid__": "c8f66d17-351a-48da-a12c-0212d28575c4",
+    "__uuid__": "a7e3f001-0001-4a01-b001-a0a0a0000001",
     "__expectedType__": "cc.EffectAsset"
   },
-  "_techIdx": 1,
+  "_techIdx": 0,
   "_defines": [
     {
-      "USE_INSTANCING": true
+      "USE_INSTANCING": true,
+      "USE_ALBEDO_MAP": true
     },
     {},
     {},
@@ -22,69 +23,69 @@
     {
       "rasterizerState": {},
       "depthStencilState": {},
-      "blendState": {
-        "targets": [
-          {}
-        ]
-      }
+      "blendState": { "targets": [{}] }
     },
     {
       "rasterizerState": {},
       "depthStencilState": {},
-      "blendState": {
-        "targets": [
-          {}
-        ]
-      }
+      "blendState": { "targets": [{}] }
     },
     {
       "rasterizerState": {},
       "depthStencilState": {},
-      "blendState": {
-        "targets": [
-          {}
-        ]
-      }
+      "blendState": { "targets": [{}] }
     },
     {
       "rasterizerState": {},
       "depthStencilState": {},
-      "blendState": {
-        "targets": [
-          {}
-        ]
-      }
+      "blendState": { "targets": [{}] }
     },
     {
       "rasterizerState": {},
       "depthStencilState": {},
-      "blendState": {
-        "targets": [
-          {}
-        ]
-      }
+      "blendState": { "targets": [{}] }
     }
   ],
   "_props": [
     {
       "mainColor": {
         "__type__": "cc.Color",
-        "r": 0,
-        "g": 204,
-        "b": 255,
-        "a": 107
+        "r": 13,
+        "g": 89,
+        "b": 140,
+        "a": 191
       },
-      "occlusion": 1,
-      "roughness": 0,
-      "specularIntensity": 1,
+      "deepColor": {
+        "__type__": "cc.Color",
+        "r": 5,
+        "g": 38,
+        "b": 77,
+        "a": 255
+      },
+      "shallowColor": {
+        "__type__": "cc.Color",
+        "r": 38,
+        "g": 140,
+        "b": 179,
+        "a": 255
+      },
+      "foamColor": {
+        "__type__": "cc.Color",
+        "r": 217,
+        "g": 235,
+        "b": 250,
+        "a": 255
+      },
       "mainTexture": {
         "__uuid__": "72c32ca0-32fa-4d08-aca1-dd842b67ea6e@6c48a",
         "__expectedType__": "cc.Texture2D"
       },
-      "normalMap": {
-        "__uuid__": "495fb923-713e-4b0d-908b-557c723b8aed@6c48a",
-        "__expectedType__": "cc.Texture2D"
-      }
+      "roughness": 0.05,
+      "metallic": 0,
+      "specularIntensity": 1,
+      "waveSpeed": 1.0,
+      "fresnelPower": 3.0,
+      "specShininess": 128
     },
     {},
     {},

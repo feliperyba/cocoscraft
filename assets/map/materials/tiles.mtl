@@ -13,7 +13,8 @@
     {
       "USE_INSTANCING": true,
       "USE_ALBEDO_MAP": true,
-      "USE_ALPHA_TEST": true
+      "USE_ALPHA_TEST": true,
+      "USE_VERTEX_COLOR": true
     },
     {},
     {},
@@ -81,22 +82,14 @@
     {
       "albedoScale": {
         "__type__": "cc.Vec3",
-        "x": 0.65,
-        "y": 0.65,
-        "z": 0.65
+        "x": 0.85,
+        "y": 0.85,
+        "z": 0.85
       },
       "occlusion": 1,
       "roughness": 1,
       "specularIntensity": 1,
       "mainTexture": {
-        "__uuid__": "495fb923-713e-4b0d-908b-557c723b8aed@6c48a",
-        "__expectedType__": "cc.Texture2D"
-      },
-      "normalMap": {
-        "__uuid__": "495fb923-713e-4b0d-908b-557c723b8aed@6c48a",
-        "__expectedType__": "cc.Texture2D"
-      },
-      "occlusionMap": {
         "__uuid__": "495fb923-713e-4b0d-908b-557c723b8aed@6c48a",
         "__expectedType__": "cc.Texture2D"
       }

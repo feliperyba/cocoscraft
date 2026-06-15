@@ -110,7 +110,7 @@ export class DigController extends Component {
         const { blockWorldPosition, chunkData, blockType } = this.currentBreak;
 
         this.removeBlock(blockWorldPosition, chunkData);
-        //this.spawnBreakParticlesBurst(blockWorldPosition, blockType);
+        this.spawnBreakParticlesBurst(blockWorldPosition, blockType);
         // this.spawnItemDrop(blockWorldPosition, blockType);
         this.regenerateChunkMesh(chunkData);
         this.updateAdjacentChunks(blockWorldPosition);

@@ -88,6 +88,7 @@ export class ChunkRenderer extends Component {
             indices16: new Uint16Array(pure.indices),
             normals: new Float32Array(pure.normals),
             uvs: new Float32Array(pure.uvs),
+            colors: pure.colors.length > 0 ? new Float32Array(pure.colors) : undefined,
         };
 
         this.updateLandMesh(landGeometry, landVertexCount, landIndexCount);
@@ -134,6 +135,7 @@ export class ChunkRenderer extends Component {
             indices16: new Uint16Array(meshData.triangles),
             normals: new Float32Array(landNormals),
             uvs: new Float32Array(landUvs),
+            colors: meshData.colors ? new Float32Array(meshData.colors) : undefined,
         };
 
         this.updateLandMesh(landGeometry, landVertexCount, landIndexCount);
