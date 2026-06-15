@@ -13,23 +13,25 @@ CCEffect %{
       properties:
         mainColor:        { value: [0.05, 0.35, 0.55, 0.75], linear: true, target: albedo,
                             editor: { displayName: Water Color, type: color } }
-        deepColor:        { value: [0.02, 0.15, 0.30, 1.0], linear: true, target: deepColor,
+        deepColor:        { value: [0.01, 0.05, 0.12, 1.0], linear: true, target: deepColor,
                             editor: { displayName: Deep Color, type: color } }
-        shallowColor:     { value: [0.15, 0.55, 0.70, 1.0], linear: true, target: shallowColor,
+        shallowColor:     { value: [0.12, 0.45, 0.58, 1.0], linear: true, target: shallowColor,
                             editor: { displayName: Shallow Color, type: color } }
         foamColor:        { value: [0.85, 0.92, 0.98, 1.0], linear: true, target: foamColor,
                             editor: { displayName: Foam Color, type: color } }
         mainTexture:      { value: white, target: albedoMap,
                             editor: { displayName: Surface Texture } }
-        waveSpeed:        { value: 1.0, target: waveParams.x,
+        waveSpeed:        { value: 0.8, target: waveParams.x,
                             editor: { displayName: Wave Speed, slide: true, range: [0, 5], step: 0.1 } }
-        fresnelPower:     { value: 3.0, target: waveParams.z,
+        waveScale:        { value: 0.7, target: waveParams.y,
+                            editor: { displayName: Wave Scale, slide: true, range: [0.1, 3], step: 0.1 } }
+        fresnelPower:     { value: 4.0, target: waveParams.z,
                             editor: { displayName: Fresnel Power, slide: true, range: [0.5, 8], step: 0.1 } }
-        specShininess:    { value: 128.0, target: waveParams.w,
-                            editor: { displayName: Spec Shininess, slide: true, range: [1, 256], step: 1 } }
-        roughness:        { value: 1.0, target: pbrParams.y }
+        specShininess:    { value: 200.0, target: waveParams.w,
+                            editor: { displayName: Spec Shininess, slide: true, range: [1, 512], step: 1 } }
+        roughness:        { value: 0.02, target: pbrParams.y }
         metallic:         { value: 0.0, target: pbrParams.z }
-        specularIntensity: { value: 0.0, target: pbrParams.w }
+        specularIntensity: { value: 1.0, target: pbrParams.w }
 
     - vert: water-vs
       frag: water-fs
@@ -71,73 +73,192 @@ CCProgram surface-fragment %{
     uniform sampler2D albedoMap;
   #endif
 
+  // Simple hash-based noise for water normals
+  vec2 hash22(vec2 p) {
+    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+    return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+  }
+
+  float noise2d(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(dot(hash22(i + vec2(0.0, 0.0)), f - vec2(0.0, 0.0)),
+                   dot(hash22(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
+               mix(dot(hash22(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)),
+                   dot(hash22(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)), u.x), u.y);
+  }
+
+  float fbm2d(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    for (int i = 0; i < 4; i++) {
+      v += a * noise2d(p);
+      p *= 2.1;
+      a *= 0.5;
+    }
+    return v;
+  }
+
+  // Compute animated water normal from FBM noise
+  vec3 computeWaterNormal(vec3 worldPos, float time, float scale, float speed) {
+    vec2 uv = worldPos.xz * scale;
+    float t = time * speed;
+
+    // Two layered noise samples offset in time for flowing motion
+    vec2 off1 = vec2(t * 0.15, t * 0.1);
+    vec2 off2 = vec2(-t * 0.08, t * 0.12);
+
+    float nx = fbm2d(uv + off1);
+    float nz = fbm2d(uv + off2 + 17.3);
+
+    // Normal from gradient
+    vec3 normal = normalize(vec3(
+        -nx * 0.35,
+        1.0,
+        -nz * 0.35
+    ));
+
+    return normal;
+  }
+
+  // Procedural sky color for reflections
+  vec3 sampleSkyColor(vec3 dir, vec3 sunDir, float dayAmt, float sunsetAmt) {
+    float upDot = clamp(dir.y, 0.0, 1.0);
+
+    vec3 zenith = mix(vec3(0.008, 0.012, 0.03), vec3(0.08, 0.32, 0.72), dayAmt);
+    vec3 horizon = mix(vec3(0.015, 0.02, 0.045), vec3(0.55, 0.72, 0.88), dayAmt);
+    horizon = mix(horizon, vec3(0.98, 0.42, 0.12), sunsetAmt * 0.55);
+
+    vec3 sky = mix(horizon, zenith, pow(upDot, 0.4));
+
+    // Sun glow in reflection
+    float sunDot = max(0.0, dot(dir, sunDir));
+    sky += vec3(1.0, 0.55, 0.25) * pow(sunDot, 4.0) * 0.08 * (dayAmt + sunsetAmt);
+    sky += vec3(1.0, 0.95, 0.9) * pow(sunDot, 800.0) * 0.5 * dayAmt;
+
+    return sky;
+  }
+
   #define CC_SURFACES_FRAGMENT_MODIFY_BASECOLOR_AND_TRANSPARENCY
   vec4 SurfacesFragmentModifyBaseColorAndTransparency() {
     vec3 viewDir = normalize(cc_cameraPos.xyz - FSInput_worldPos);
-    vec3 nrm = normalize(FSInput_worldNormal);
-    float fresnel = pow(1.0 - max(dot(viewDir, nrm), 0.0), waveParams.z);
-    fresnel = clamp(fresnel * 1.5, 0.0, 1.0);
+    vec3 baseNrm = normalize(FSInput_worldNormal);
+    float time = cc_time.x;
+
+    // Animated water normal
+    vec3 waterNrm = computeWaterNormal(FSInput_worldPos, time, waveParams.y, waveParams.x);
+
+    // Use animated normal for all calculations
+    vec3 nrm = normalize(mix(baseNrm, waterNrm, 0.85));
 
     vec3 sunDir = normalize(cc_mainLitDir.xyz);
     float sunH = sunDir.y;
     float dayAmt = smoothstep(-0.08, 0.15, sunH);
+    float sunsetAmt = exp(-sunH * sunH * 12.0) * step(-0.15, sunH);
+    float nightAmt = 1.0 - dayAmt;
 
-    vec3 waterTint = mix(deepColor.rgb, shallowColor.rgb, dayAmt);
+    // Fresnel
+    float NdotV = max(dot(nrm, viewDir), 0.0);
+    float fresnel = pow(1.0 - NdotV, waveParams.z);
+    fresnel = clamp(fresnel * 1.3, 0.0, 1.0);
 
-    float t = cc_time.x * waveParams.x;
-    vec2 uv1 = FSInput_worldPos.xz * 0.35 + vec2(t * 0.15, t * 0.1);
-    vec2 uv2 = FSInput_worldPos.xz * 0.2 + vec2(-t * 0.08, t * 0.12);
-    float ripple = sin(uv1.x * 6.0) * sin(uv1.y * 6.0) * 0.5
-                 + sin(uv2.x * 4.0) * sin(uv2.y * 4.0) * 0.5;
-    waterTint += vec3(ripple * 0.03);
+    // Water depth tint: deep vs shallow based on viewing angle
+    // Steeper angles see deeper color, shallow angles see sky reflection
+    float depthFactor = 1.0 - NdotV;
+
+    // Animated surface ripples for texture variation
+    float t = time * waveParams.x;
+    vec2 rippleUV = FSInput_worldPos.xz * 0.4;
+    float ripple1 = sin(rippleUV.x * 5.0 + t * 1.2) * cos(rippleUV.y * 5.0 + t * 0.8) * 0.5;
+    float ripple2 = sin(rippleUV.x * 8.0 - t * 0.6) * sin(rippleUV.y * 6.0 + t * 1.5) * 0.5;
+    float rippleAmt = (ripple1 + ripple2) * 0.02;
+
+    // Water base color: deep at depth, shallow at surface
+    vec3 deepTint = mix(deepColor.rgb, shallowColor.rgb, depthFactor * 0.6);
+    deepTint += rippleAmt;
+
+    // Foam at wave crests
+    float foamThreshold = 0.45;
+    float foamNoise = fbm2d(FSInput_worldPos.xz * 1.5 + t * 0.3);
+    float foam = smoothstep(foamThreshold, foamThreshold + 0.15, foamNoise);
+    foam *= smoothstep(0.0, 0.1, dayAmt + 0.3); // less foam at night
 
     #if USE_ALBEDO_MAP
       vec4 texC = texture(albedoMap, FSInput_texcoord);
       texC.rgb = SRGBToLinear(texC.rgb);
-      waterTint *= (0.85 + texC.rgb * 0.3);
+      deepTint *= (0.9 + texC.rgb * 0.15);
     #endif
 
+    // Final color: mix deep water with foam
+    vec3 finalColor = mix(deepTint, foamColor.rgb, foam * 0.3);
+
+    // Alpha based on fresnel and depth
     float alpha = mix(albedo.a, 0.92, fresnel);
-    return vec4(waterTint, alpha);
+    alpha = mix(alpha, 1.0, foam * 0.5);
+
+    return vec4(finalColor, alpha);
   }
 
   #define CC_SURFACES_FRAGMENT_MODIFY_PBRPARAMS
   vec4 SurfacesFragmentModifyPBRParams() {
-    return vec4(1.0, 1.0, 0.0, 0.0);
+    // Make water slightly glossy for specular highlights
+    return vec4(0.0, 0.02, 0.0, 1.0);
+  }
+
+  #define CC_SURFACES_FRAGMENT_MODIFY_SHADING_NORMAL
+  vec3 SurfacesFragmentModifyShadingNormal(in Vec3 v) {
+    // Override the shading normal with animated water normal
+    vec3 viewDir = normalize(cc_cameraPos.xyz - FSInput_worldPos);
+    vec3 waterNrm = computeWaterNormal(FSInput_worldPos, cc_time.x, waveParams.y, waveParams.x);
+    return normalize(mix(FSInput_worldNormal, waterNrm, 0.7));
   }
 
   #define CC_SURFACES_FRAGMENT_MODIFY_EMISSIVE
   vec3 SurfacesFragmentModifyEmissive() {
     vec3 viewDir = normalize(cc_cameraPos.xyz - FSInput_worldPos);
     vec3 nrm = normalize(FSInput_worldNormal);
+    vec3 waterNrm = computeWaterNormal(FSInput_worldPos, cc_time.x, waveParams.y, waveParams.x);
+    vec3 smoothNrm = normalize(mix(nrm, waterNrm, 0.7));
+
     vec3 sunDir = normalize(cc_mainLitDir.xyz);
     float sunH = sunDir.y;
     float dayAmt = smoothstep(-0.08, 0.15, sunH);
     float sunsetAmt = exp(-sunH * sunH * 12.0) * step(-0.15, sunH);
+    float nightAmt = 1.0 - dayAmt;
 
-    vec3 reflDir = reflect(-viewDir, nrm);
-    float reflUp = max(0.0, reflDir.y);
-    float reflSun = max(0.0, dot(reflDir, sunDir));
+    // Fresnel for sky reflection
+    float NdotV = max(dot(smoothNrm, viewDir), 0.0);
+    float fresnel = pow(1.0 - NdotV, waveParams.z);
+    fresnel = clamp(fresnel * 1.3, 0.0, 1.0);
 
-    vec3 skyZenith = mix(vec3(0.008, 0.012, 0.03), vec3(0.08, 0.32, 0.72), dayAmt);
-    vec3 skyHorizon = mix(vec3(0.015, 0.02, 0.045), vec3(0.55, 0.72, 0.88), dayAmt);
-    skyHorizon = mix(skyHorizon, vec3(0.98, 0.42, 0.12), sunsetAmt * 0.55);
-    vec3 skyColor = mix(skyHorizon, skyZenith, pow(reflUp, 0.4));
+    // Reflection direction
+    vec3 reflDir = reflect(-viewDir, smoothNrm);
 
-    skyColor += vec3(1.0, 0.55, 0.25) * pow(reflSun, 4.0) * 0.08 * (dayAmt + sunsetAmt);
-    skyColor += vec3(1.0, 0.95, 0.9) * pow(reflSun, 64.0) * 0.25 * (dayAmt + sunsetAmt);
+    // Procedural sky reflection
+    vec3 skyRefl = sampleSkyColor(reflDir, sunDir, dayAmt, sunsetAmt);
 
+    // Sun specular highlight (Blinn-Phong)
+    vec3 halfDir = normalize(sunDir + viewDir);
+    float NdotH = max(dot(smoothNrm, halfDir), 0.0);
+    float specHighlight = pow(NdotH, waveParams.w);
+    vec3 specColor = vec3(1.0, 0.95, 0.85) * specHighlight * 1.5 * dayAmt;
+
+    // Moon specular at night
     vec3 moonDir = normalize(vec3(-sunDir.x, abs(sunDir.y) * 0.3 + 0.15, -sunDir.z));
-    float reflMoon = max(0.0, dot(reflDir, moonDir));
-    skyColor += vec3(0.82, 0.84, 0.92) * smoothstep(0.9988, 0.9992, reflMoon) * (1.0 - dayAmt) * 1.5;
+    vec3 moonHalf = normalize(moonDir + viewDir);
+    float moonSpec = pow(max(dot(smoothNrm, moonHalf), 0.0), waveParams.w * 0.5);
+    specColor += vec3(0.7, 0.75, 0.85) * moonSpec * 0.3 * nightAmt;
 
-    float fresnel = pow(1.0 - max(dot(viewDir, nrm), 0.0), 3.0);
-    fresnel = clamp(fresnel * 1.5, 0.0, 1.0);
+    // Combine sky reflection and specular
+    vec3 emissive = skyRefl * fresnel + specColor;
 
-    vec3 specRefl = reflect(-sunDir, nrm);
-    float spec = pow(max(dot(viewDir, specRefl), 0.0), waveParams.w);
+    // Subsurface scattering approximation: light through water
+    float sss = pow(max(dot(-sunDir, viewDir), 0.0), 2.0);
+    vec3 sssColor = shallowColor.rgb * 0.3 * sss * dayAmt;
+    emissive += sssColor;
 
-    return skyColor * fresnel + foamColor.rgb * spec * 2.0 * dayAmt;
+    return emissive;
   }
 }%
 

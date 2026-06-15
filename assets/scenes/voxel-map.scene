@@ -154,18 +154,18 @@
     "_illuminance": 55000,
     "_illuminanceLDR": 1.6927083333333335,
     "_shadowEnabled": true,
-    "_shadowPcf": 2,
-    "_shadowBias": 0.00001,
-    "_shadowNormalBias": 0.1,
+    "_shadowPcf": 5,
+    "_shadowBias": 0.0001,
+    "_shadowNormalBias": 0.3,
     "_shadowSaturation": 1,
-    "_shadowDistance": 60,
+    "_shadowDistance": 80,
     "_shadowInvisibleOcclusionRange": 200,
-    "_csmLevel": 2,
-    "_csmLayerLambda": 0.75,
+    "_csmLevel": 3,
+    "_csmLayerLambda": 0.85,
     "_csmOptimizationMode": 2,
     "_csmAdvancedOptions": false,
-    "_csmLayersTransition": false,
-    "_csmTransitionRange": 0.05,
+    "_csmLayersTransition": true,
+    "_csmTransitionRange": 0.15,
     "_shadowFixedArea": false,
     "_shadowNear": 0.1,
     "_shadowFar": 10,
@@ -1107,7 +1107,7 @@
       "__id__": 1
     },
     "_children": [],
-    "_active": false,
+    "_active": true,
     "_components": [
       {
         "__id__": 35
@@ -1185,9 +1185,9 @@
     "__prefab": null,
     "_enableAlphaMask": false,
     "_useHdrIlluminance": false,
-    "_threshold": 0.953237593202906,
-    "_iterations": 3,
-    "_intensity": 0.95,
+    "_threshold": 0.82,
+    "_iterations": 4,
+    "_intensity": 0.55,
     "_id": "5aED7v94VHSYYiuj93CFMd"
   },
   {
@@ -1217,10 +1217,10 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "_radiusScale": 0.8,
-    "_angleBiasDegree": 10,
-    "_blurSharpness": 4,
-    "_aoSaturation": 1,
+    "_radiusScale": 1,
+    "_angleBiasDegree": 15,
+    "_blurSharpness": 8,
+    "_aoSaturation": 1.2,
     "_needBlur": true,
     "_id": "bfnml/oMtJdaTZOlkNOO+e"
   },
@@ -9477,20 +9477,20 @@
     "__type__": "cc.AmbientInfo",
     "_skyColorHDR": {
       "__type__": "cc.Vec4",
-      "x": 0.5,
-      "y": 0.65,
-      "z": 0.9,
-      "w": 0.520833125
+      "x": 0.42,
+      "y": 0.58,
+      "z": 0.92,
+      "w": 0.65104140625
     },
     "_skyColor": {
       "__type__": "cc.Vec4",
-      "x": 0.5,
-      "y": 0.65,
-      "z": 0.9,
-      "w": 0.520833125
+      "x": 0.42,
+      "y": 0.58,
+      "z": 0.92,
+      "w": 0.65104140625
     },
-    "_skyIllumHDR": 20000,
-    "_skyIllum": 20000,
+    "_skyIllumHDR": 25000,
+    "_skyIllum": 25000,
     "_groundAlbedoHDR": {
       "__type__": "cc.Vec4",
       "x": 0.5,
@@ -9535,16 +9535,16 @@
     "_planeBias": 1,
     "_shadowColor": {
       "__type__": "cc.Color",
-      "r": 100,
-      "g": 100,
-      "b": 100,
+      "r": 120,
+      "g": 120,
+      "b": 130,
       "a": 255
     },
     "_maxReceived": 4,
     "_size": {
       "__type__": "cc.Vec2",
-      "x": 2048,
-      "y": 2048
+      "x": 1024,
+      "y": 1024
     }
   },
   {
@@ -9585,19 +9585,19 @@
     "_type": 0,
     "_fogColor": {
       "__type__": "cc.Color",
-      "r": 160,
-      "g": 190,
-      "b": 220,
+      "r": 185,
+      "g": 205,
+      "b": 230,
       "a": 255
     },
     "_enabled": true,
-    "_fogDensity": 0.03,
-    "_fogStart": 35,
-    "_fogEnd": 72,
+    "_fogDensity": 0.02,
+    "_fogStart": 20,
+    "_fogEnd": 75,
     "_fogAtten": 5,
-    "_fogTop": 1.5,
-    "_fogRange": 1.2,
-    "_accurate": false
+    "_fogTop": 10,
+    "_fogRange": 3,
+    "_accurate": true
   },
   {
     "__type__": "cc.OctreeInfo",

@@ -54,10 +54,10 @@ export class DayNightCycle extends Component {
             }
             const mat = new Material();
             mat.initialize({ effectAsset: effect });
-            mat.setProperty('starBrightness', 1.0, 0);
-            mat.setProperty('milkyWayIntensity', 0.6, 0);
+            mat.setProperty('starBrightness', 1.2, 0);
+            mat.setProperty('milkyWayIntensity', 0.8, 0);
             mat.setProperty('sunSize', 0.997, 0);
-            mat.setProperty('skyExposure', 1.0, 0);
+            mat.setProperty('skyExposure', 1.05, 0);
             renderer.setMaterial(mat, 0);
             this._skyMaterial = mat;
             this.updateSkyUniforms();
@@ -96,17 +96,32 @@ export class DayNightCycle extends Component {
         if (!this.sunLight) return;
 
         const sunHeight = this._sunDir.y;
-        const dayFactor = smoothstep(-0.1, 0.3, sunHeight);
-        const sunsetFactor = smoothstep(-0.05, 0.05, sunHeight) * (1.0 - smoothstep(0.05, 0.3, sunHeight));
-        const nightFactor = 1.0 - dayFactor;
 
-        // Light color: day → sunset → night
-        let lr = lerp(60, 255, dayFactor);
-        let lg = lerp(70, 240, dayFactor);
-        let lb = lerp(120, 210, dayFactor);
-        lr = lerp(lr, 255, sunsetFactor * 0.5);
-        lg = lerp(lg, 140, sunsetFactor * 0.5);
-        lb = lerp(lb, 70, sunsetFactor * 0.5);
+        // Multi-phase day cycle factors
+        const dayFactor = smoothstep(-0.05, 0.25, sunHeight);
+        const sunsetFactor = smoothstep(-0.03, 0.02, sunHeight) * (1.0 - smoothstep(0.02, 0.2, sunHeight));
+        const goldenHour = smoothstep(0.0, 0.15, sunHeight) * (1.0 - smoothstep(0.15, 0.35, sunHeight));
+        const nightFactor = 1.0 - dayFactor;
+        const deepNight = smoothstep(0.0, -0.3, -sunHeight);
+
+        // === LIGHT COLOR: rich warm golden → warm white → blue-white at midday ===
+        // Midday: warm white (255, 248, 230)
+        // Golden hour: warm orange (255, 180, 100)
+        // Sunset: deep orange-red (255, 130, 60)
+        // Night: cool blue moonlight (80, 110, 170)
+
+        let lr = lerp(80, 255, dayFactor);
+        let lg = lerp(110, 248, dayFactor);
+        let lb = lerp(170, 230, dayFactor);
+
+        lr = lerp(lr, 255, goldenHour * 0.3);
+        lg = lerp(lg, 210, goldenHour * 0.3);
+        lb = lerp(lb, 150, goldenHour * 0.3);
+
+        lr = lerp(lr, 255, sunsetFactor * 0.6);
+        lg = lerp(lg, 130, sunsetFactor * 0.6);
+        lb = lerp(lb, 60, sunsetFactor * 0.6);
+
         this.sunLight.color = new Color(
             math.clamp(Math.floor(lr), 0, 255),
             math.clamp(Math.floor(lg), 0, 255),
@@ -114,30 +129,63 @@ export class DayNightCycle extends Component {
             255
         );
 
-        // Light intensity: bright day, dim night
-        this.sunLight.illuminance = lerp(2000, 55000, dayFactor);
+        // === LIGHT INTENSITY ===
+        const baseIllum = lerp(800, 65000, dayFactor);
+        const sunsetBoost = sunsetFactor * 8000;
+        this.sunLight.illuminance = baseIllum + sunsetBoost;
 
-        // Ambient: bright day, very dim night
+        // === ENVIRONMENT ===
         const pipeline: any = (director.root as any)?.pipeline;
         const psd = pipeline?.pipelineSceneData;
         const ambient = psd?.ambient;
         if (ambient) {
-            ambient.skyIllumHDR = lerp(2000, 25000, dayFactor);
-            const skyR = lerp(0.03, 0.5, dayFactor);
-            const skyG = lerp(0.04, 0.65, dayFactor);
-            const skyB = lerp(0.08, 0.9, dayFactor);
-            ambient.skyColorHDR = new Vec4(skyR, skyG, skyB, lerp(0.05, 0.5, dayFactor));
+            ambient.skyIllumHDR = lerp(1500, 28000, dayFactor);
+
+            // Sky ambient color: warm at sunset, blue at midday, dark blue at night
+            const skyR = lerp(0.02, 0.42, dayFactor);
+            const skyG = lerp(0.03, 0.58, dayFactor);
+            const skyB = lerp(0.08, 0.92, dayFactor);
+            const skyWarmR = lerp(0.0, 0.65, sunsetFactor * 0.5);
+            const skyWarmG = lerp(0.0, 0.35, sunsetFactor * 0.5);
+            const skyWarmB = lerp(0.0, 0.12, sunsetFactor * 0.5);
+            ambient.skyColorHDR = new Vec4(
+                skyR + skyWarmR,
+                skyG + skyWarmG,
+                skyB + skyWarmB,
+                lerp(0.05, 0.5, dayFactor)
+            );
+
+            ambient.groundAlbedoHDR = new Vec4(0.22, 0.19, 0.14, 1.0);
         }
 
-        // Fog: match sky horizon color for seamless chunk edge hiding
+        // === FOG: dynamic color matching sky horizon ===
         const fog = psd?.fog;
         if (fog) {
-            let fr = lerp(8, 160, dayFactor);
-            let fg = lerp(12, 190, dayFactor);
-            let fb = lerp(25, 220, dayFactor);
-            fr = lerp(fr, 200, sunsetFactor * 0.4);
-            fg = lerp(fg, 110, sunsetFactor * 0.4);
-            fb = lerp(fb, 60, sunsetFactor * 0.4);
+            // Base sky horizon colors per time of day
+            // Day: soft blue (185, 205, 230)
+            // Golden hour: warm haze (230, 180, 130)
+            // Sunset: orange-red (240, 140, 80)
+            // Night: deep blue (12, 18, 40)
+
+            let fr = lerp(12, 185, dayFactor);
+            let fg = lerp(18, 205, dayFactor);
+            let fb = lerp(40, 230, dayFactor);
+
+            // Golden hour warm tint
+            fr = lerp(fr, 230, goldenHour * 0.4);
+            fg = lerp(fg, 180, goldenHour * 0.4);
+            fb = lerp(fb, 130, goldenHour * 0.4);
+
+            // Sunset deep warm tint
+            fr = lerp(fr, 240, sunsetFactor * 0.55);
+            fg = lerp(fg, 140, sunsetFactor * 0.55);
+            fb = lerp(fb, 80, sunsetFactor * 0.55);
+
+            // Deep night cooling
+            fr = lerp(fr, 5, deepNight * 0.4);
+            fg = lerp(fg, 8, deepNight * 0.4);
+            fb = lerp(fb, 20, deepNight * 0.4);
+
             fog.fogColor = new Color(
                 math.clamp(Math.floor(fr), 0, 255),
                 math.clamp(Math.floor(fg), 0, 255),

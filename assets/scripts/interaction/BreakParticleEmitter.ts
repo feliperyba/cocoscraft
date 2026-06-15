@@ -1,15 +1,22 @@
-import { _decorator, Component, MeshRenderer, Node, Vec3, Mesh, primitives, utils, Material, director } from 'cc';
+import { _decorator, Component, MeshRenderer, Node, Vec3, Mesh, primitives, utils, Material, director, assetManager, Texture2D } from 'cc';
 
-import { BlockType } from '../map/models';
+import { BlockType } from '../map/models/blocks';
+import { BlockDataManager } from '../map/blockDataManager';
 
 const { ccclass } = _decorator;
 
-const BLOCK_COLORS: Record<number, Vec3> = {
-    [BlockType.Grass]: new Vec3(0.35, 0.55, 0.2),
-    [BlockType.Dirt]:  new Vec3(0.45, 0.3, 0.15),
-    [BlockType.Stone]: new Vec3(0.5, 0.5, 0.5),
-    [BlockType.Sand]:  new Vec3(0.76, 0.7, 0.45),
-    [BlockType.Water]: new Vec3(0.1, 0.4, 0.7),
+const ATLAS_UUID = '495fb923-713e-4b0d-908b-557c723b8aed@6c48a';
+const TILE_SIZE = 0.125;
+const TEX_OFFSET = 0.001;
+
+// Atlas tile coords per block type (x, y) for side faces
+const BLOCK_TILES: Record<number, [number, number]> = {
+    [BlockType.GrassDirt]: [0, 1],
+    [BlockType.Dirt]:      [0, 0],
+    [BlockType.SandDirt]:  [0, 2],
+    [BlockType.Sand]:      [0, 4],
+    [BlockType.Stone]:     [0, 5],
+    [BlockType.Water]:     [0, 6],
 };
 
 interface Particle {
@@ -19,28 +26,47 @@ interface Particle {
     lifetime: number;
     maxLife: number;
     rotSpeed: Vec3;
+    initialScale: number;
 }
 
-const POOL_SIZE = 64;
-const GRAVITY = -18;
+const POOL_SIZE = 80;
+const GRAVITY = -22;
 
 @ccclass('BreakParticleEmitter')
 export class BreakParticleEmitter extends Component {
     private pool: Particle[] = [];
-    private cubeMesh: Mesh | null = null;
+    private blockMeshes: Map<number, Mesh> = new Map();
+    private material: Material | null = null;
 
     onLoad(): void {
-        this.cubeMesh = utils.MeshUtils.createMesh(primitives.box({ width: 0.15, height: 0.15, length: 0.15 }));
+        // Create one textured cube mesh per block type
+        for (const [blockType, tile] of Object.entries(BLOCK_TILES)) {
+            const bt = parseInt(blockType);
+            const mesh = this.createTexturedCube(bt, tile);
+            this.blockMeshes.set(bt, mesh);
+        }
+
+        // Create a shared unlit material with the atlas texture
+        this.material = new Material();
+        this.material.initialize({
+            effectName: 'builtin-unlit',
+            defines: { USE_ALBEDO_MAP: true },
+        });
+        this.material.setProperty('mainColor', new Vec3(1, 1, 1), 0);
+
+        // Load atlas texture and assign to material
+        assetManager.loadAny({ uuid: ATLAS_UUID, type: Texture2D }, (err, tex) => {
+            if (err || !tex) {
+                console.error('BreakParticleEmitter: Failed to load atlas:', err);
+                return;
+            }
+            this.material?.setProperty('mainTexture', tex, 0);
+        });
 
         for (let i = 0; i < POOL_SIZE; i++) {
             const node = new Node(`BreakP${i}`);
             const renderer = node.addComponent(MeshRenderer);
-            if (this.cubeMesh) renderer.mesh = this.cubeMesh;
-
-            const mat = new Material();
-            mat.initialize({ effectName: 'builtin-unlit' });
-            mat.setProperty('mainColor', new Vec3(0.5, 0.5, 0.5), 0);
-            renderer.setMaterial(mat, 0);
+            renderer.setMaterial(this.material, 0);
 
             node.active = false;
             this.node.addChild(node);
@@ -51,21 +77,86 @@ export class BreakParticleEmitter extends Component {
                 lifetime: 0,
                 maxLife: 1,
                 rotSpeed: new Vec3(),
+                initialScale: 0.12,
             });
         }
     }
 
+    private createTexturedCube(blockType: number, tile: [number, number]): Mesh {
+        const size = 0.15;
+        const s = size * 0.5;
+
+        // Compute UVs for this tile
+        const u0 = TILE_SIZE * tile[0] + TEX_OFFSET;
+        const u1 = TILE_SIZE * tile[0] + TILE_SIZE - TEX_OFFSET;
+        const v0 = TILE_SIZE * tile[1] + TEX_OFFSET;
+        const v1 = TILE_SIZE * tile[1] + TILE_SIZE - TEX_OFFSET;
+
+        // For grass blocks, use grass texture on top, dirt on bottom
+        let topU0 = u0, topU1 = u1, topV0 = v0, topV1 = v1;
+        let botU0 = u0, botU1 = u1, botV0 = v0, botV1 = v1;
+        if (blockType === BlockType.GrassDirt) {
+            // Top = grass tile (0,3)
+            topU0 = TILE_SIZE * 0 + TEX_OFFSET;
+            topU1 = TILE_SIZE * 0 + TILE_SIZE - TEX_OFFSET;
+            topV0 = TILE_SIZE * 3 + TEX_OFFSET;
+            topV1 = TILE_SIZE * 3 + TILE_SIZE - TEX_OFFSET;
+            // Bottom = dirt tile (0,0)
+            botU0 = TILE_SIZE * 0 + TEX_OFFSET;
+            botU1 = TILE_SIZE * 0 + TILE_SIZE - TEX_OFFSET;
+            botV0 = TILE_SIZE * 0 + TEX_OFFSET;
+            botV1 = TILE_SIZE * 0 + TILE_SIZE - TEX_OFFSET;
+        }
+
+        const positions: number[] = [];
+        const uvs: number[] = [];
+        const indices: number[] = [];
+        let vi = 0;
+
+        const addFace = (
+            ax: number, ay: number, az: number,  bx: number, by: number, bz: number,
+            cx: number, cy: number, cz: number,  dx: number, dy: number, dz: number,
+            fu0: number, fv0: number, fu1: number, fv1: number
+        ) => {
+            positions.push(ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz);
+            uvs.push(fu0, fv1, fu0, fv0, fu1, fv0, fu1, fv1);
+            indices.push(vi, vi + 1, vi + 2, vi, vi + 2, vi + 3);
+            vi += 4;
+        };
+
+        // Front (+z)
+        addFace(-s, -s, s, s, -s, s, s, s, s, -s, s, s, u0, v0, u1, v1);
+        // Back (-z)
+        addFace(s, -s, -s, -s, -s, -s, -s, s, -s, s, s, -s, u0, v0, u1, v1);
+        // Top (+y)
+        addFace(-s, s, s, s, s, s, s, s, -s, -s, s, -s, topU0, topV0, topU1, topV1);
+        // Bottom (-y)
+        addFace(-s, -s, -s, s, -s, -s, s, -s, s, -s, -s, s, botU0, botV0, botU1, botV1);
+        // Right (+x)
+        addFace(s, -s, s, s, -s, -s, s, s, -s, s, s, s, u0, v0, u1, v1);
+        // Left (-x)
+        addFace(-s, -s, -s, -s, -s, s, -s, s, s, -s, s, -s, u0, v0, u1, v1);
+
+        const geom = {
+            positions: new Float32Array(positions),
+            uv: new Float32Array(uvs),
+            indices: new Uint16Array(indices),
+        };
+
+        return utils.MeshUtils.createMesh(geom as any);
+    }
+
     emitBreakingDust(position: Vec3, blockType: BlockType): void {
-        const count = 2;
+        const count = 3;
         for (let i = 0; i < count; i++) {
-            this.spawnParticle(position, blockType, 0.06, 1.5, 0.4);
+            this.spawnParticle(position, blockType, 0.06, 1.5, 0.35);
         }
     }
 
     emitDestroyBurst(position: Vec3, blockType: BlockType): void {
-        const count = 12;
+        const count = 16;
         for (let i = 0; i < count; i++) {
-            this.spawnParticle(position, blockType, 0.12, 4, 0.8);
+            this.spawnParticle(position, blockType, 0.1 + Math.random() * 0.06, 3.5 + Math.random() * 2, 0.7 + Math.random() * 0.4);
         }
     }
 
@@ -73,36 +164,44 @@ export class BreakParticleEmitter extends Component {
         const p = this.pool.find(p => !p.active);
         if (!p) return;
 
+        // Set the correct mesh for this block type
+        const mesh = this.blockMeshes.get(blockType) ?? this.blockMeshes.get(BlockType.Stone);
+        const renderer = p.node.getComponent(MeshRenderer);
+        if (mesh && renderer) {
+            renderer.mesh = mesh;
+        }
+
         p.active = true;
         p.lifetime = 0;
         p.maxLife = lifetime + Math.random() * 0.3;
+        p.initialScale = size;
 
-        const px = pos.x + 0.5 + (Math.random() - 0.5) * 0.3;
-        const py = pos.y + 0.5 + (Math.random() - 0.5) * 0.3;
-        const pz = pos.z + 0.5 + (Math.random() - 0.5) * 0.3;
+        const px = pos.x + 0.5 + (Math.random() - 0.5) * 0.4;
+        const py = pos.y + 0.5 + (Math.random() - 0.5) * 0.4;
+        const pz = pos.z + 0.5 + (Math.random() - 0.5) * 0.4;
         p.node.setWorldPosition(px, py, pz);
 
-        const angle = Math.random() * Math.PI * 2;
-        const horizSpeed = (Math.random() * 0.5 + 0.5) * speed;
+        // Outward burst with upward bias
+        const dx = (Math.random() - 0.5);
+        const dy = Math.random() * 0.8 + 0.4;
+        const dz = (Math.random() - 0.5);
+        const horizSpeed = (0.4 + Math.random() * 0.6) * speed;
+        const vertSpeed = speed * dy;
         p.velocity.set(
-            Math.cos(angle) * horizSpeed,
-            Math.random() * speed + 1,
-            Math.sin(angle) * horizSpeed
+            dx * horizSpeed,
+            vertSpeed,
+            dz * horizSpeed
         );
 
+        // Random tumble
         p.rotSpeed.set(
-            (Math.random() - 0.5) * 720,
-            (Math.random() - 0.5) * 720,
-            (Math.random() - 0.5) * 720
+            (Math.random() - 0.5) * 540,
+            (Math.random() - 0.5) * 540,
+            (Math.random() - 0.5) * 540
         );
 
         p.node.setScale(size, size, size);
         p.node.active = true;
-
-        const color = BLOCK_COLORS[blockType] ?? new Vec3(0.5, 0.5, 0.5);
-        const renderer = p.node.getComponent(MeshRenderer);
-        const mat = renderer?.getMaterial(0);
-        mat?.setProperty('mainColor', color, 0);
     }
 
     update(dt: number): void {
@@ -116,7 +215,12 @@ export class BreakParticleEmitter extends Component {
                 continue;
             }
 
+            // Gravity
             p.velocity.y += GRAVITY * dt;
+
+            // Air resistance
+            p.velocity.x *= 0.985;
+            p.velocity.z *= 0.985;
 
             const pos = p.node.worldPosition;
             p.node.setWorldPosition(
@@ -125,18 +229,32 @@ export class BreakParticleEmitter extends Component {
                 pos.z + p.velocity.z * dt
             );
 
-            if (p.node.worldPosition.y < 0) {
-                p.velocity.y = Math.abs(p.velocity.y) * 0.3;
-                p.velocity.x *= 0.7;
-                p.velocity.z *= 0.7;
-                p.node.setWorldPosition(p.node.worldPosition.x, 0, p.node.worldPosition.z);
+            // Ground bounce
+            if (p.node.worldPosition.y < 0.05) {
+                p.node.setWorldPosition(p.node.worldPosition.x, 0.05, p.node.worldPosition.z);
+                if (Math.abs(p.velocity.y) > 0.5) {
+                    p.velocity.y = Math.abs(p.velocity.y) * 0.35;
+                    p.velocity.x *= 0.6;
+                    p.velocity.z *= 0.6;
+                } else {
+                    p.velocity.y = 0;
+                    p.velocity.x *= 0.8;
+                    p.velocity.z *= 0.8;
+                }
             }
 
-            const lifeFactor = 1 - p.lifetime / p.maxLife;
-            const baseScale = 0.12;
-            const scale = baseScale * lifeFactor;
+            // Scale shrink-fade in last 40% of life
+            const lifeProgress = p.lifetime / p.maxLife;
+            let scale: number;
+            if (lifeProgress > 0.6) {
+                const fadeT = (lifeProgress - 0.6) / 0.4;
+                scale = p.initialScale * (1.0 - fadeT * fadeT);
+            } else {
+                scale = p.initialScale;
+            }
             p.node.setScale(scale, scale, scale);
 
+            // Tumble rotation
             const rot = p.node.eulerAngles;
             p.node.setRotationFromEuler(
                 rot.x + p.rotSpeed.x * dt,

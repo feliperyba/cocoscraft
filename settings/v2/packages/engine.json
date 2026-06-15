@@ -15,7 +15,7 @@
             "_value": true
           },
           "gfx-webgl2": {
-            "_value": false
+            "_value": true
           },
           "gfx-webgpu": {
             "_value": true
@@ -207,6 +207,7 @@
           "debug-renderer",
           "geometry-renderer",
           "gfx-webgl",
+          "gfx-webgl2",
           "gfx-webgpu",
           "graphics",
           "light-probe",

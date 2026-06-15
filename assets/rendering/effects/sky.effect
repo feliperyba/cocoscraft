@@ -10,10 +10,10 @@ CCEffect %{
         depthWrite: false
       properties:
         sunDir: { value: [0, 1, 0, 0.5] }
-        starBrightness: { value: 1.0, target: skyParams.x }
-        milkyWayIntensity: { value: 0.7, target: skyParams.y }
-        sunSize: { value: 0.9995, target: skyParams.z }
-        skyExposure: { value: 1.0, target: skyParams.w }
+        starBrightness: { value: 1.2, target: skyParams.x }
+        milkyWayIntensity: { value: 0.8, target: skyParams.y }
+        sunSize: { value: 0.997, target: skyParams.z }
+        skyExposure: { value: 1.05, target: skyParams.w }
 }%
 
 CCProgram sky-vs %{
@@ -22,9 +22,11 @@ CCProgram sky-vs %{
 
   in vec3 a_position;
   out vec3 v_dir;
+  out vec3 v_worldPos;
 
   void main() {
     v_dir = normalize(a_position);
+    v_worldPos = a_position;
     mat3 viewRot = mat3(cc_matView);
     vec3 viewPos = viewRot * a_position;
     vec4 clipPos = cc_matProj * vec4(viewPos, 1.0);
@@ -42,6 +44,7 @@ CCProgram sky-fs %{
   };
 
   in vec3 v_dir;
+  in vec3 v_worldPos;
   layout(location = 0) out vec4 fragColor;
 
   float hash13(vec3 p3) {
@@ -55,15 +58,26 @@ CCProgram sky-fs %{
     vec3 f = fract(x);
     f = f * f * (3.0 - 2.0 * f);
     return mix(mix(mix(hash13(i + vec3(0.0, 0.0, 0.0)), hash13(i + vec3(1.0, 0.0, 0.0)), f.x),
-                   mix(hash13(i + vec3(0.0, 1.0, 0.0)), hash13(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
-               mix(mix(hash13(i + vec3(0.0, 0.0, 1.0)), hash13(i + vec3(1.0, 0.0, 1.0)), f.x),
-                   mix(hash13(i + vec3(0.0, 1.0, 1.0)), hash13(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
+                    mix(hash13(i + vec3(0.0, 1.0, 0.0)), hash13(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+                mix(mix(hash13(i + vec3(0.0, 0.0, 1.0)), hash13(i + vec3(1.0, 0.0, 1.0)), f.x),
+                    mix(hash13(i + vec3(0.0, 1.0, 1.0)), hash13(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
   }
 
   float fbm(vec3 p) {
     float v = 0.0;
     float a = 0.5;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
+      v += a * noise3(p);
+      p *= 2.1;
+      a *= 0.5;
+    }
+    return v;
+  }
+
+  float fbm3(vec3 p) {
+    float v = 0.0;
+    float a = 0.5;
+    for (int i = 0; i < 3; i++) {
       v += a * noise3(p);
       p *= 2.1;
       a *= 0.5;
@@ -93,6 +107,68 @@ CCProgram sky-fs %{
     return vec3(0.95, 0.95, 1.0);
   }
 
+  // Rayleigh-like atmospheric scattering approximation
+  vec3 atmosphericScatter(vec3 dir, vec3 sun, float dayAmt, float sunsetAmt) {
+    float cosS = dot(dir, sun);
+
+    // Rayleigh coefficient (blue scattering)
+    float rayleigh = 1.0 + cosS * cosS;
+    vec3 rayleighColor = vec3(0.18, 0.46, 1.0) * rayleigh * 0.5;
+
+    // Mie scattering (sun glow)
+    float miePhase = pow(max(cosS, 0.0), 16.0);
+    vec3 mieColor = mix(vec3(1.0, 0.6, 0.3), vec3(1.0, 0.95, 0.9), dayAmt);
+
+    // Apply atmospheric depth (thicker at horizon)
+    float atmDepth = 1.0 - abs(dir.y);
+    atmDepth = pow(atmDepth, 1.5);
+
+    return rayleighColor * atmDepth + mieColor * miePhase * atmDepth * 0.3;
+  }
+
+  // Volumetric-style cloud rendering with lighting
+  vec4 volumetricClouds(vec3 dir, vec3 sun, float dayAmt, float sunsetAmt, float nightAmt) {
+    if (dir.y < 0.02) return vec4(0.0);
+
+    // Cloud UV with wind
+    float t = cc_time.x * 0.01;
+    vec3 cloudUV = dir * 2.0;
+    cloudUV.xz += vec2(t * 3.0, t * 1.5);
+
+    // Multi-octave FBM for cloud density
+    float density = fbm(cloudUV);
+    float detail = fbm3(cloudUV * 3.5 + 5.0);
+
+    // Shape the clouds
+    float cloudMask = smoothstep(0.38, 0.55, density);
+    cloudMask *= mix(0.3, 1.0, dir.y + 0.3);
+
+    // Add detail variation
+    cloudMask *= (0.7 + detail * 0.3);
+
+    if (cloudMask < 0.01) return vec4(0.0);
+
+    // Cloud lighting: directional illumination from sun
+    float sunFacing = max(0.0, dot(dir, sun));
+    float cloudLight = mix(0.4, 1.0, sunFacing);
+    cloudLight *= mix(0.3, 1.0, dayAmt);
+
+    // Cloud color: white in day, orange at sunset, dark at night
+    vec3 cloudBase = vec3(1.0, 0.98, 0.95);
+    cloudBase = mix(cloudBase * 0.15, cloudBase, dayAmt); // Dark at night
+    cloudBase = mix(cloudBase, vec3(1.0, 0.6, 0.3), sunsetAmt * 0.5); // Sunset tint
+    cloudBase *= cloudLight;
+
+    // Edge highlighting (brighter edges where sun passes through)
+    float edge = smoothstep(0.35, 0.5, density) * (1.0 - smoothstep(0.5, 0.7, density));
+    vec3 edgeGlow = vec3(1.0, 0.9, 0.7) * edge * sunFacing * (dayAmt + sunsetAmt) * 0.3;
+
+    vec3 cloudColor = cloudBase + edgeGlow;
+    float cloudAlpha = cloudMask * mix(0.4, 0.7, dayAmt);
+
+    return vec4(cloudColor, cloudAlpha);
+  }
+
   void main() {
     vec3 dir = normalize(v_dir);
     vec3 sun = normalize(sunDir.xyz);
@@ -100,56 +176,65 @@ CCProgram sky-fs %{
     float dayAmt = smoothstep(-0.08, 0.15, sunH);
     float nightAmt = 1.0 - dayAmt;
     float sunsetAmt = exp(-sunH * sunH * 12.0) * step(-0.15, sunH);
+    float goldenHour = smoothstep(0.0, 0.1, sunH) * (1.0 - smoothstep(0.1, 0.3, sunH));
 
     float upDot = clamp(dir.y, 0.0, 1.0);
     float sunDot = max(0.0, dot(dir, sun));
 
-    // === SKY GRADIENT ===
-    vec3 zenithDay = vec3(0.08, 0.32, 0.72);
-    vec3 zenithNight = vec3(0.008, 0.012, 0.03);
+    // === SKY GRADIENT with atmospheric scattering ===
+    vec3 zenithDay = vec3(0.06, 0.28, 0.68);
+    vec3 zenithNight = vec3(0.005, 0.008, 0.022);
     vec3 zenith = mix(zenithNight, zenithDay, dayAmt);
 
-    vec3 horizonDay = vec3(0.55, 0.72, 0.88);
-    vec3 horizonNight = vec3(0.015, 0.02, 0.045);
+    vec3 horizonDay = vec3(0.52, 0.70, 0.88);
+    vec3 horizonNight = vec3(0.012, 0.016, 0.04);
     vec3 horizon = mix(horizonNight, horizonDay, dayAmt);
 
+    // Sunset/golden hour horizon colors
     vec3 sunsetTint = vec3(0.98, 0.42, 0.12);
-    horizon = mix(horizon, sunsetTint, sunsetAmt * 0.55);
+    vec3 goldenTint = vec3(1.0, 0.75, 0.45);
+    horizon = mix(horizon, sunsetTint, sunsetAmt * 0.6);
+    horizon = mix(horizon, goldenTint, goldenHour * 0.35);
 
     float gradient = pow(upDot, 0.35);
     vec3 sky = mix(horizon, zenith, gradient);
 
-    // === HORIZON HAZE ===
-    float haze = pow(1.0 - abs(dir.y), 4.0);
-    sky = mix(sky, sky * 1.15 + horizon * 0.15, haze * 0.4);
+    // Atmospheric scattering contribution
+    sky += atmosphericScatter(dir, sun, dayAmt, sunsetAmt) * 0.15;
 
-    // === SUN GLOW (Mie) ===
-    float mie1 = pow(sunDot, 4.0) * 0.08;
-    float mie2 = pow(sunDot, 64.0) * 0.25;
-    float mie3 = pow(sunDot, 800.0) * 0.5;
+    // === HORIZON HAZE ===
+    float haze = pow(1.0 - abs(dir.y), 5.0);
+    vec3 hazeColor = mix(horizon * 1.1, sunsetTint * 1.3, sunsetAmt * 0.5);
+    sky = mix(sky, hazeColor, haze * 0.5 * (dayAmt + sunsetAmt));
+
+    // === SUN GLOW (multi-tier Mie) ===
+    float mie1 = pow(sunDot, 3.0) * 0.12;
+    float mie2 = pow(sunDot, 32.0) * 0.3;
+    float mie3 = pow(sunDot, 512.0) * 0.6;
     vec3 glowCol = mix(vec3(1.0, 0.55, 0.25), vec3(1.0, 0.95, 0.9), dayAmt);
-    sky += glowCol * (mie1 + mie2 + mie3) * (dayAmt + sunsetAmt * 0.5);
+    glowCol = mix(glowCol, vec3(1.0, 0.4, 0.15), sunsetAmt * 0.5);
+    sky += glowCol * (mie1 + mie2 + mie3) * (dayAmt + sunsetAmt * 0.7);
 
     // === SUN DISK ===
-    float disk = smoothstep(skyParams.z - 0.001, skyParams.z, sunDot);
-    sky += vec3(1.0, 0.96, 0.88) * disk * dayAmt * 4.0;
+    float disk = smoothstep(skyParams.z - 0.0015, skyParams.z, sunDot);
+    vec3 sunDiskColor = mix(vec3(1.0, 0.85, 0.6), vec3(1.0, 0.97, 0.92), dayAmt);
+    sunDiskColor = mix(sunDiskColor, vec3(1.0, 0.5, 0.2), sunsetAmt * 0.5);
+    sky += sunDiskColor * disk * dayAmt * 5.0;
 
-    // === CLOUDS ===
-    vec3 cloudUV = dir * 2.5 + vec3(cc_time.x * 0.008, 0.0, cc_time.x * 0.005);
-    float cloud1 = fbm(cloudUV);
-    float cloud2 = fbm(cloudUV * 2.3 + 10.0);
-    float clouds = smoothstep(0.42, 0.65, cloud1) * smoothstep(0.3, 0.6, cloud2);
-    clouds *= mix(0.3, 1.0, dir.y + 0.3);
-    vec3 cloudCol = mix(horizon * 1.2, vec3(1.0, 0.98, 0.95), 0.6);
-    cloudCol = mix(cloudCol, sunsetTint * 1.3, sunsetAmt * 0.4);
-    sky = mix(sky, cloudCol, clouds * dayAmt * 0.35);
+    // === VOLUMETRIC CLOUDS ===
+    vec4 clouds = volumetricClouds(dir, sun, dayAmt, sunsetAmt, nightAmt);
+    sky = mix(sky, clouds.rgb, clouds.a);
 
     // === MOON ===
     vec3 moonDir = normalize(vec3(-sun.x, abs(sun.y) * 0.3 + 0.15, -sun.z));
     float moonDot = max(0.0, dot(dir, moonDir));
-    float moonGlow = pow(moonDot, 256.0) * 0.15;
+    float moonGlow = pow(moonDot, 256.0) * 0.2;
     float moonDisk = smoothstep(0.9988, 0.9992, moonDot);
-    sky += vec3(0.82, 0.84, 0.92) * (moonDisk * 1.8 + moonGlow) * nightAmt;
+
+    // Moon surface variation
+    float moonDetail = noise3(dir * 800.0) * 0.08;
+    vec3 moonColor = vec3(0.82, 0.84, 0.92) * (1.0 - moonDetail);
+    sky += moonColor * (moonDisk * 2.0 + moonGlow) * nightAmt;
 
     // === STARS ===
     float starMask = smoothstep(0.0, 0.35, nightAmt) * smoothstep(-0.15, 0.05, dir.y);
@@ -171,7 +256,9 @@ CCProgram sky-fs %{
     mwCol += vec3(0.08, 0.04, 0.0) * fbm(dir * 8.0);
     sky += mwCol * mwBand * mwNoise * nightAmt * skyParams.y;
 
+    // === EXPOSURE ===
     sky *= skyParams.w;
+
     fragColor = vec4(sky, 1.0);
   }
 }%

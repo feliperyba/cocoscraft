@@ -80,12 +80,13 @@
         "__uuid__": "72c32ca0-32fa-4d08-aca1-dd842b67ea6e@6c48a",
         "__expectedType__": "cc.Texture2D"
       },
-      "roughness": 0.05,
+      "roughness": 0.02,
       "metallic": 0,
       "specularIntensity": 1,
-      "waveSpeed": 1.0,
-      "fresnelPower": 3.0,
-      "specShininess": 128
+      "waveSpeed": 0.8,
+      "waveScale": 0.7,
+      "fresnelPower": 4.0,
+      "specShininess": 200
     },
     {},
     {},
