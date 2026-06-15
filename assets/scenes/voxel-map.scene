@@ -1075,8 +1075,8 @@
       "x": 2332,
       "y": 1221
     },
-    "chunkSize": 16,
-    "chunkHeight": 96,
+    "chunkSize": 24,
+    "chunkHeight": 128,
     "chunkPrefab": {
       "__uuid__": "3a2edd2b-f888-4ca6-b0cf-f3a933ed3f2e",
       "__expectedType__": "cc.Prefab"
@@ -9480,14 +9480,14 @@
       "x": 0.5,
       "y": 0.65,
       "z": 0.9,
-      "w": 0.91145796875
+      "w": 0.520833125
     },
     "_skyColor": {
       "__type__": "cc.Vec4",
       "x": 0.5,
       "y": 0.65,
       "z": 0.9,
-      "w": 0.91145796875
+      "w": 0.520833125
     },
     "_skyIllumHDR": 20000,
     "_skyIllum": 20000,
@@ -9585,15 +9585,15 @@
     "_type": 0,
     "_fogColor": {
       "__type__": "cc.Color",
-      "r": 180,
-      "g": 205,
-      "b": 230,
+      "r": 160,
+      "g": 190,
+      "b": 220,
       "a": 255
     },
     "_enabled": true,
     "_fogDensity": 0.03,
-    "_fogStart": 60,
-    "_fogEnd": 150,
+    "_fogStart": 35,
+    "_fogEnd": 72,
     "_fogAtten": 5,
     "_fogTop": 1.5,
     "_fogRange": 1.2,

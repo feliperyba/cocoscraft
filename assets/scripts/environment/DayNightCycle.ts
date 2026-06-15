@@ -118,14 +118,32 @@ export class DayNightCycle extends Component {
         this.sunLight.illuminance = lerp(2000, 55000, dayFactor);
 
         // Ambient: bright day, very dim night
-        const root: any = director.root;
-        const ambient = root?.pipelineSceneData?.ambient;
+        const pipeline: any = (director.root as any)?.pipeline;
+        const psd = pipeline?.pipelineSceneData;
+        const ambient = psd?.ambient;
         if (ambient) {
             ambient.skyIllumHDR = lerp(2000, 25000, dayFactor);
             const skyR = lerp(0.03, 0.5, dayFactor);
             const skyG = lerp(0.04, 0.65, dayFactor);
             const skyB = lerp(0.08, 0.9, dayFactor);
             ambient.skyColorHDR = new Vec4(skyR, skyG, skyB, lerp(0.05, 0.5, dayFactor));
+        }
+
+        // Fog: match sky horizon color for seamless chunk edge hiding
+        const fog = psd?.fog;
+        if (fog) {
+            let fr = lerp(8, 160, dayFactor);
+            let fg = lerp(12, 190, dayFactor);
+            let fb = lerp(25, 220, dayFactor);
+            fr = lerp(fr, 200, sunsetFactor * 0.4);
+            fg = lerp(fg, 110, sunsetFactor * 0.4);
+            fb = lerp(fb, 60, sunsetFactor * 0.4);
+            fog.fogColor = new Color(
+                math.clamp(Math.floor(fr), 0, 255),
+                math.clamp(Math.floor(fg), 0, 255),
+                math.clamp(Math.floor(fb), 0, 255),
+                255
+            );
         }
     }
 

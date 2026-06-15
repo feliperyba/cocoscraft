@@ -27,9 +27,9 @@ CCEffect %{
                             editor: { displayName: Fresnel Power, slide: true, range: [0.5, 8], step: 0.1 } }
         specShininess:    { value: 128.0, target: waveParams.w,
                             editor: { displayName: Spec Shininess, slide: true, range: [1, 256], step: 1 } }
-        roughness:        { value: 0.05, target: pbrParams.y }
+        roughness:        { value: 1.0, target: pbrParams.y }
         metallic:         { value: 0.0, target: pbrParams.z }
-        specularIntensity: { value: 1.0, target: pbrParams.w }
+        specularIntensity: { value: 0.0, target: pbrParams.w }
 
     - vert: water-vs
       frag: water-fs
@@ -77,29 +77,33 @@ CCProgram surface-fragment %{
     vec3 nrm = normalize(FSInput_worldNormal);
     float fresnel = pow(1.0 - max(dot(viewDir, nrm), 0.0), waveParams.z);
     fresnel = clamp(fresnel * 1.5, 0.0, 1.0);
-    vec3 waterCol = mix(shallowColor.rgb, deepColor.rgb, fresnel);
+
+    vec3 sunDir = normalize(cc_mainLitDir.xyz);
+    float sunH = sunDir.y;
+    float dayAmt = smoothstep(-0.08, 0.15, sunH);
+
+    vec3 waterTint = mix(deepColor.rgb, shallowColor.rgb, dayAmt);
 
     float t = cc_time.x * waveParams.x;
     vec2 uv1 = FSInput_worldPos.xz * 0.35 + vec2(t * 0.15, t * 0.1);
     vec2 uv2 = FSInput_worldPos.xz * 0.2 + vec2(-t * 0.08, t * 0.12);
     float ripple = sin(uv1.x * 6.0) * sin(uv1.y * 6.0) * 0.5
                  + sin(uv2.x * 4.0) * sin(uv2.y * 4.0) * 0.5;
-    waterCol += vec3(ripple * 0.04);
+    waterTint += vec3(ripple * 0.03);
 
     #if USE_ALBEDO_MAP
-      vec2 scrollUV = FSInput_texcoord;
-      vec4 texC = texture(albedoMap, scrollUV);
+      vec4 texC = texture(albedoMap, FSInput_texcoord);
       texC.rgb = SRGBToLinear(texC.rgb);
-      waterCol *= (0.8 + texC.rgb * 0.4);
+      waterTint *= (0.85 + texC.rgb * 0.3);
     #endif
 
     float alpha = mix(albedo.a, 0.92, fresnel);
-    return vec4(waterCol, alpha);
+    return vec4(waterTint, alpha);
   }
 
   #define CC_SURFACES_FRAGMENT_MODIFY_PBRPARAMS
   vec4 SurfacesFragmentModifyPBRParams() {
-    return vec4(1.0, pbrParams.y, pbrParams.z, pbrParams.w);
+    return vec4(1.0, 1.0, 0.0, 0.0);
   }
 
   #define CC_SURFACES_FRAGMENT_MODIFY_EMISSIVE
@@ -107,9 +111,33 @@ CCProgram surface-fragment %{
     vec3 viewDir = normalize(cc_cameraPos.xyz - FSInput_worldPos);
     vec3 nrm = normalize(FSInput_worldNormal);
     vec3 sunDir = normalize(cc_mainLitDir.xyz);
-    vec3 refl = reflect(-sunDir, nrm);
-    float spec = pow(max(dot(viewDir, refl), 0.0), waveParams.w);
-    return foamColor.rgb * spec * 2.0;
+    float sunH = sunDir.y;
+    float dayAmt = smoothstep(-0.08, 0.15, sunH);
+    float sunsetAmt = exp(-sunH * sunH * 12.0) * step(-0.15, sunH);
+
+    vec3 reflDir = reflect(-viewDir, nrm);
+    float reflUp = max(0.0, reflDir.y);
+    float reflSun = max(0.0, dot(reflDir, sunDir));
+
+    vec3 skyZenith = mix(vec3(0.008, 0.012, 0.03), vec3(0.08, 0.32, 0.72), dayAmt);
+    vec3 skyHorizon = mix(vec3(0.015, 0.02, 0.045), vec3(0.55, 0.72, 0.88), dayAmt);
+    skyHorizon = mix(skyHorizon, vec3(0.98, 0.42, 0.12), sunsetAmt * 0.55);
+    vec3 skyColor = mix(skyHorizon, skyZenith, pow(reflUp, 0.4));
+
+    skyColor += vec3(1.0, 0.55, 0.25) * pow(reflSun, 4.0) * 0.08 * (dayAmt + sunsetAmt);
+    skyColor += vec3(1.0, 0.95, 0.9) * pow(reflSun, 64.0) * 0.25 * (dayAmt + sunsetAmt);
+
+    vec3 moonDir = normalize(vec3(-sunDir.x, abs(sunDir.y) * 0.3 + 0.15, -sunDir.z));
+    float reflMoon = max(0.0, dot(reflDir, moonDir));
+    skyColor += vec3(0.82, 0.84, 0.92) * smoothstep(0.9988, 0.9992, reflMoon) * (1.0 - dayAmt) * 1.5;
+
+    float fresnel = pow(1.0 - max(dot(viewDir, nrm), 0.0), 3.0);
+    fresnel = clamp(fresnel * 1.5, 0.0, 1.0);
+
+    vec3 specRefl = reflect(-sunDir, nrm);
+    float spec = pow(max(dot(viewDir, specRefl), 0.0), waveParams.w);
+
+    return skyColor * fresnel + foamColor.rgb * spec * 2.0 * dayAmt;
   }
 }%
 
