@@ -154,18 +154,18 @@
     "_illuminance": 55000,
     "_illuminanceLDR": 1.6927083333333335,
     "_shadowEnabled": true,
-    "_shadowPcf": 5,
-    "_shadowBias": 0.0001,
-    "_shadowNormalBias": 0.3,
+    "_shadowPcf": 2,
+    "_shadowBias": 0.00001,
+    "_shadowNormalBias": 0.05,
     "_shadowSaturation": 1,
-    "_shadowDistance": 80,
+    "_shadowDistance": 60,
     "_shadowInvisibleOcclusionRange": 200,
-    "_csmLevel": 3,
-    "_csmLayerLambda": 0.85,
+    "_csmLevel": 1,
+    "_csmLayerLambda": 0.75,
     "_csmOptimizationMode": 2,
     "_csmAdvancedOptions": false,
-    "_csmLayersTransition": true,
-    "_csmTransitionRange": 0.15,
+    "_csmLayersTransition": false,
+    "_csmTransitionRange": 0.05,
     "_shadowFixedArea": false,
     "_shadowNear": 0.1,
     "_shadowFar": 10,
@@ -1095,7 +1095,7 @@
     "__prefab": null,
     "global": true,
     "_shadingScale": 1,
-    "enableShadingScaleInEditor": false,
+    "enableShadingScaleInEditor": true,
     "_id": "38+ZC7hfBFhIffctIJaYMr"
   },
   {
@@ -1169,7 +1169,7 @@
     "node": {
       "__id__": 36
     },
-    "_enabled": true,
+    "_enabled": false,
     "__prefab": null,
     "_id": "d5/gpDSQRH45yqUxCLZwpb"
   },
@@ -1198,7 +1198,7 @@
     "node": {
       "__id__": 36
     },
-    "_enabled": true,
+    "_enabled": false,
     "__prefab": null,
     "_contribute": 0.2,
     "_colorGradingMap": {
@@ -1215,7 +1215,7 @@
     "node": {
       "__id__": 36
     },
-    "_enabled": true,
+    "_enabled": false,
     "__prefab": null,
     "_radiusScale": 1,
     "_angleBiasDegree": 15,
@@ -9535,9 +9535,9 @@
     "_planeBias": 1,
     "_shadowColor": {
       "__type__": "cc.Color",
-      "r": 120,
-      "g": 120,
-      "b": 130,
+      "r": 80,
+      "g": 80,
+      "b": 90,
       "a": 255
     },
     "_maxReceived": 4,
@@ -9582,7 +9582,7 @@
   },
   {
     "__type__": "cc.FogInfo",
-    "_type": 0,
+    "_type": 2,
     "_fogColor": {
       "__type__": "cc.Color",
       "r": 185,
@@ -9591,12 +9591,12 @@
       "a": 255
     },
     "_enabled": true,
-    "_fogDensity": 0.02,
-    "_fogStart": 20,
+    "_fogDensity": 0.03,
+    "_fogStart": 25,
     "_fogEnd": 75,
     "_fogAtten": 5,
     "_fogTop": 10,
-    "_fogRange": 3,
+    "_fogRange": 5,
     "_accurate": true
   },
   {
@@ -9620,7 +9620,7 @@
     "__type__": "cc.SkinInfo",
     "_enabled": true,
     "_blurRadius": 0.01,
-    "_sssIntensity": 0
+    "_sssIntensity": 4
   },
   {
     "__type__": "cc.LightProbeInfo",

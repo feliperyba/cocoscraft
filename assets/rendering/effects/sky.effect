@@ -4,10 +4,11 @@ CCEffect %{
     - vert: sky-vs
       frag: sky-fs
       rasterizerState:
-        cullMode: none
+        cullMode: front
       depthStencilState:
-        depthTest: false
+        depthTest: true
         depthWrite: false
+        depthFunc: less_equal
       properties:
         sunDir: { value: [0, 1, 0, 0.5] }
         starBrightness: { value: 1.2, target: skyParams.x }
@@ -128,7 +129,9 @@ CCProgram sky-fs %{
 
   // Volumetric-style cloud rendering with lighting
   vec4 volumetricClouds(vec3 dir, vec3 sun, float dayAmt, float sunsetAmt, float nightAmt) {
-    if (dir.y < 0.02) return vec4(0.0);
+    // Smooth fade at horizon instead of hard cutoff
+    float horizonFade = smoothstep(-0.02, 0.08, dir.y);
+    if (horizonFade < 0.01) return vec4(0.0);
 
     // Cloud UV with wind
     float t = cc_time.x * 0.01;
@@ -142,6 +145,7 @@ CCProgram sky-fs %{
     // Shape the clouds
     float cloudMask = smoothstep(0.38, 0.55, density);
     cloudMask *= mix(0.3, 1.0, dir.y + 0.3);
+    cloudMask *= horizonFade;
 
     // Add detail variation
     cloudMask *= (0.7 + detail * 0.3);

@@ -184,10 +184,10 @@ export const generateChunkMeshPure = (config: MeshGenerationConfig): PureMeshDat
         ],
     ];
 
-    // Per-face brightness — pronounced directional shading for volumetric feel
-    const FACE_BRIGHTNESS = [0.82, 0.82, 1.0, 0.62, 0.73, 0.73]; // F, B, Up, Down, R, L
+    // Per-face brightness — natural directional shading
+    const FACE_BRIGHTNESS = [0.92, 0.92, 1.0, 0.78, 0.86, 0.86]; // F, B, Up, Down, R, L
 
-    const AO_LEVELS = [0.55, 0.72, 0.88, 1.0];
+    const AO_LEVELS = [0.65, 0.80, 0.92, 1.0];
 
     // AO neighbor offsets: for each face dir, for each vertex [0-3],
     // offsets for [side1, side2, corner] relative to the block in the face normal direction

@@ -43,7 +43,13 @@ export class DayNightCycle extends Component {
 
         const sphereMesh = utils.MeshUtils.createMesh(primitives.sphere(500));
         renderer.mesh = sphereMesh;
-        node.layer = Layers.Enum.DEFAULT;
+        // Use bit 29 (custom layer) so sky doesn't interfere with scene object culling
+        const SKY_LAYER = 1 << 29;
+        node.layer = SKY_LAYER;
+        // Make sure camera can see this layer
+        if (this.mainCamera) {
+            this.mainCamera.visibility |= SKY_LAYER;
+        }
         director.getScene()?.addChild(node);
         this._skyNode = node;
 
@@ -71,6 +77,13 @@ export class DayNightCycle extends Component {
         this.updateSun();
         this.updateLighting();
         this.updateSkyUniforms();
+        this.updateSkyPosition();
+    }
+
+    private updateSkyPosition(): void {
+        if (!this._skyNode || !this.mainCamera) return;
+        const camPos = this.mainCamera.node.worldPosition;
+        this._skyNode.setWorldPosition(camPos.x, camPos.y, camPos.z);
     }
 
     private updateSun(): void {
@@ -158,15 +171,10 @@ export class DayNightCycle extends Component {
             ambient.groundAlbedoHDR = new Vec4(0.22, 0.19, 0.14, 1.0);
         }
 
-        // === FOG: dynamic color matching sky horizon ===
+        // === FOG: dynamic atmospheric fog with height + sun scattering ===
         const fog = psd?.fog;
         if (fog) {
             // Base sky horizon colors per time of day
-            // Day: soft blue (185, 205, 230)
-            // Golden hour: warm haze (230, 180, 130)
-            // Sunset: orange-red (240, 140, 80)
-            // Night: deep blue (12, 18, 40)
-
             let fr = lerp(12, 185, dayFactor);
             let fg = lerp(18, 205, dayFactor);
             let fb = lerp(40, 230, dayFactor);

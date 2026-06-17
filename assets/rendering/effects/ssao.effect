@@ -1,0 +1,163 @@
+CCEffect %{
+  techniques:
+  - passes:
+    - vert: ssao-vs
+      frag: ssao-fs
+      pass: post-process
+      rasterizerState:
+        cullMode: none
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+    - vert: ssao-vs
+      frag: combine-fs
+      pass: combine-pass
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+      rasterizerState:
+        cullMode: none
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: zero
+          blendDst: src_alpha
+          blendSrcAlpha: zero
+          blendDstAlpha: one
+}%
+
+CCProgram ssao-vs %{
+  precision highp float;
+  layout(location = 0) in vec3 a_position;
+  layout(location = 1) in vec2 a_texCoord;
+  out vec2 v_uv;
+  void main() {
+    v_uv = a_texCoord;
+    gl_Position = vec4(a_position.xy, 0.0, 1.0);
+  }
+}%
+
+CCProgram ssao-fs %{
+  precision highp float;
+
+  in vec2 v_uv;
+
+  #pragma rate depthTex pass
+  uniform sampler2D depthTex;
+
+  uniform Constants {
+    vec4 uParams; // x=near, y=far, z=1/width, w=1/height
+    vec4 uProj;   // x=tanHalfFovX, y=tanHalfFovY, z=radius(meters), w=bias
+  };
+
+  layout(location = 0) out vec4 fragColor;
+
+  float linearizeDepth(float d) {
+    float n = uParams.x;
+    float f = uParams.y;
+    return (n * f) / (f - d * (f - n));
+  }
+
+  vec3 viewPos(vec2 uv, float linDepth) {
+    vec2 ndc = uv * 2.0 - 1.0;
+    return vec3(ndc.x * uProj.x * linDepth, ndc.y * uProj.y * linDepth, linDepth);
+  }
+
+  void main() {
+    vec2 uv = v_uv;
+    vec2 invRes = uParams.zw;
+
+    // === ALL TEXTURE READS — UNIFORM CONTROL FLOW ===
+    float dC = texture(depthTex, uv).r;
+    float dR = texture(depthTex, uv + vec2(invRes.x, 0.0)).r;
+    float dL = texture(depthTex, uv - vec2(invRes.x, 0.0)).r;
+    float dU = texture(depthTex, uv + vec2(0.0, invRes.y)).r;
+    float dD = texture(depthTex, uv - vec2(0.0, invRes.y)).r;
+
+    float linZ = linearizeDepth(dC);
+    vec3 fragPos = viewPos(uv, linZ);
+
+    // Reconstruct normal
+    vec3 posR = viewPos(uv + vec2(invRes.x, 0.0), linearizeDepth(dR));
+    vec3 posL = viewPos(uv - vec2(invRes.x, 0.0), linearizeDepth(dL));
+    vec3 posU = viewPos(uv + vec2(0.0, invRes.y), linearizeDepth(dU));
+    vec3 posD = viewPos(uv - vec2(0.0, invRes.y), linearizeDepth(dD));
+    vec3 dx = dot(posR - fragPos, posR - fragPos) < dot(fragPos - posL, fragPos - posL) ? (posR - fragPos) : (fragPos - posL);
+    vec3 dy = dot(posU - fragPos, posU - fragPos) < dot(fragPos - posD, fragPos - posD) ? (posU - fragPos) : (fragPos - posD);
+    vec3 normal = normalize(cross(dy, dx));
+
+    // TBN basis
+    vec3 upRef = abs(normal.y) < 0.999 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+    vec3 tangent = normalize(cross(upRef, normal));
+    vec3 bitangent = cross(normal, tangent);
+
+    float radius = uProj.z;
+    float bias = uProj.w;
+
+    // Precompute sample positions and projected UVs
+    vec2 sUV[16];
+    vec3 sPos[16];
+    float golden = 2.39996;
+
+    for (int i = 0; i < 16; i++) {
+      float fi = float(i);
+      float angle = fi * golden;
+      float rz = fract(sin(fi * 12.9898 + 78.233) * 43758.5453);
+      rz = mix(0.2, 1.0, rz);
+      float r = sqrt((fi + 0.5) / 16.0);
+      float s = sqrt(1.0 - rz * rz);
+      vec3 sDir = vec3(cos(angle) * s, sin(angle) * s, rz);
+      vec3 sTan = tangent * sDir.x + bitangent * sDir.y + normal * sDir.z;
+      sPos[i] = fragPos + sTan * radius * r;
+      sUV[i] = clamp(vec2(
+        sPos[i].x / (uProj.x * sPos[i].z) * 0.5 + 0.5,
+        sPos[i].y / (uProj.y * sPos[i].z) * 0.5 + 0.5
+      ), vec2(0.001), vec2(0.999));
+    }
+
+    // Read all 16 sample depths (UNIFORM)
+    float sDepth[16];
+    for (int i = 0; i < 16; i++) {
+      sDepth[i] = texture(depthTex, sUV[i]).r;
+    }
+
+    // === COMPUTE AO using normal-projected depth difference ===
+    // Instead of comparing raw/sinear depth values, we project the
+    // geometry-to-sample vector onto the surface normal. This naturally
+    // ignores depth changes ALONG the surface (slopes) and only detects
+    // geometry that's ABOVE the surface plane (real occluders).
+    float ao = 0.0;
+    for (int i = 0; i < 16; i++) {
+      // Reconstruct actual geometry position at the projected UV
+      vec3 sampleGeo = viewPos(sUV[i], linearizeDepth(sDepth[i]));
+      // Vector from center surface to sample geometry
+      vec3 V = sampleGeo - fragPos;
+      // Project onto normal: positive = geometry above surface (towards camera)
+      float nDotV = dot(V, normal);
+      // Occlusion: geometry is significantly above the surface plane
+      float occluded = step(bias, nDotV);
+      // Range check: fade out distant geometry
+      float rangeCheck = smoothstep(radius, 0.0, length(V));
+      ao += occluded * rangeCheck;
+    }
+    ao = 1.0 - clamp(ao / 16.0 * 4.0, 0.0, 1.0);
+
+    // No AO on skybox
+    float sky = step(dC, 0.999);
+    ao = mix(1.0, ao, sky);
+
+    fragColor = vec4(ao, ao, ao, 1.0);
+  }
+}%
+
+CCProgram combine-fs %{
+  precision highp float;
+  in vec2 v_uv;
+  #pragma rate aoTex pass
+  uniform sampler2D aoTex;
+  layout(location = 0) out vec4 fragColor;
+  void main() {
+    float ao = texture(aoTex, v_uv).r;
+    fragColor = vec4(1.0, 1.0, 1.0, ao);
+  }
+}%

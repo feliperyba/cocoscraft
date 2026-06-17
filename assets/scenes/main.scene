@@ -388,7 +388,7 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "_contribute": 0.4,
+    "_contribute": 0.45,
     "_colorGradingMap": {
       "__uuid__": "8451f3da-dd72-422a-9e0b-e5cb756a8ca7@6c48a",
       "__expectedType__": "cc.Texture2D"
@@ -433,7 +433,7 @@
     "node": {
       "__id__": 8
     },
-    "_enabled": true,
+    "_enabled": false,
     "__prefab": null,
     "_sampleScale": 1,
     "_feedback": 0.8,
