@@ -1,0 +1,70 @@
+CCEffect %{
+  techniques:
+  - passes:
+    - vert: post-vs
+      frag: vol-fs
+      pass: post-process
+      rasterizerState: { cullMode: none }
+      depthStencilState: { depthTest: false, depthWrite: false }
+}%
+
+CCProgram post-vs %{
+  precision highp float;
+  layout(location = 0) in vec3 a_position;
+  layout(location = 1) in vec2 a_texCoord;
+  out vec2 v_uv;
+  void main() { v_uv = a_texCoord; gl_Position = vec4(a_position.xy, 0.0, 1.0); }
+}%
+
+CCProgram vol-fs %{
+  precision highp float;
+  in vec2 v_uv;
+
+  #pragma rate sceneColorTex pass
+  uniform sampler2D sceneColorTex;
+  #pragma rate depthTex pass
+  uniform sampler2D depthTex;
+
+  uniform Constants {
+    vec4 uLight;  // x=screenX, y=screenY, z=intensity, w=decay
+    vec4 uColor;  // rgb=tint, w=exposure
+  };
+
+  layout(location = 0) out vec4 fragColor;
+
+  void main() {
+    vec2 uv = v_uv;
+    vec2 lightPos = uLight.xy;
+
+    // Pass through scene
+    vec3 sceneColor = texture(sceneColorTex, uv).rgb;
+
+    // Direction from pixel to light
+    vec2 delta = lightPos - uv;
+    float dist = length(delta);
+    vec2 dir = delta / max(dist, 0.0001);
+
+    // Radial blur samples toward light
+    vec3 godRays = vec3(0.0);
+    float decay = 1.0;
+
+    for (int i = 0; i < 24; i++) {
+      float t = float(i) / 24.0;
+      vec2 suv = clamp(uv + dir * dist * t * 0.25, vec2(0.001), vec2(0.999));
+
+      vec3 col = texture(sceneColorTex, suv).rgb;
+      float depth = texture(depthTex, suv).r;
+
+      // Only sky contributes to rays
+      float sky = smoothstep(0.95, 0.999, depth);
+      float brightness = max(col.r, max(col.g, col.b));
+
+      godRays += col * sky * brightness * decay * uColor.w;
+      decay *= uLight.w;
+    }
+    godRays /= 24.0;
+
+    fragColor = vec4(sceneColor, 1.0); // DEBUG: pure passthrough — remove to enable god rays
+    // fragColor = vec4(sceneColor + godRays * uLight.z * uColor.rgb, 1.0);
+  }
+}%

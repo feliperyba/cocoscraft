@@ -1,0 +1,127 @@
+CCEffect %{
+  techniques:
+  - passes:
+    - vert: post-vs
+      frag: ssr-fs
+      pass: post-process
+      rasterizerState: { cullMode: none }
+      depthStencilState: { depthTest: false, depthWrite: false }
+}%
+
+CCProgram post-vs %{
+  precision highp float;
+  layout(location = 0) in vec3 a_position;
+  layout(location = 1) in vec2 a_texCoord;
+  out vec2 v_uv;
+  void main() { v_uv = a_texCoord; gl_Position = vec4(a_position.xy, 0.0, 1.0); }
+}%
+
+CCProgram ssr-fs %{
+  precision highp float;
+  in vec2 v_uv;
+
+  #pragma rate sceneColorTex pass
+  uniform sampler2D sceneColorTex;
+  #pragma rate depthTex pass
+  uniform sampler2D depthTex;
+
+  uniform Constants {
+    vec4 uParams; // x=near, y=far, z=1/width, w=1/height
+    vec4 uProj;   // x=tanFovX, y=tanFovY, z=stepSize, w=intensity
+  };
+
+  layout(location = 0) out vec4 fragColor;
+
+  float linearizeDepth(float d) {
+    float n = uParams.x; float f = uParams.y;
+    return (n * f) / (f - d * (f - n));
+  }
+
+  vec3 viewPos(vec2 uv, float z) {
+    vec2 ndc = uv * 2.0 - 1.0;
+    return vec3(ndc.x * uProj.x * z, ndc.y * uProj.y * z, z);
+  }
+
+  vec2 projectSS(vec3 vp) {
+    return clamp(vec2(
+      vp.x / (uProj.x * vp.z) * 0.5 + 0.5,
+      vp.y / (uProj.y * vp.z) * 0.5 + 0.5
+    ), vec2(0.001), vec2(0.999));
+  }
+
+  void main() {
+    vec2 uv = v_uv;
+    vec2 invRes = uParams.zw;
+    float intensity = uProj.w;
+
+    // Pass through scene color
+    vec3 sceneColor = texture(sceneColorTex, uv).rgb;
+
+    // === WATER MASK: detect water by color (blue-dominant, tight) ===
+    float blueness = sceneColor.b - max(sceneColor.r, sceneColor.g);
+    float waterMask = smoothstep(0.08, 0.2, blueness);
+
+    // Read center + neighbors
+    float dC = texture(depthTex, uv).r;
+    float dR = texture(depthTex, uv + vec2(invRes.x, 0.0)).r;
+    float dL = texture(depthTex, uv - vec2(invRes.x, 0.0)).r;
+    float dU = texture(depthTex, uv + vec2(0.0, invRes.y)).r;
+    float dD = texture(depthTex, uv - vec2(0.0, invRes.y)).r;
+
+    float sky = step(dC, 0.999);
+    float validPixel = waterMask * sky;
+    float linZ = linearizeDepth(dC);
+    vec3 fragPos = viewPos(uv, linZ);
+
+    // Normal
+    vec3 posR = viewPos(uv + vec2(invRes.x, 0.0), linearizeDepth(dR));
+    vec3 posL = viewPos(uv - vec2(invRes.x, 0.0), linearizeDepth(dL));
+    vec3 posU = viewPos(uv + vec2(0.0, invRes.y), linearizeDepth(dU));
+    vec3 posD = viewPos(uv - vec2(0.0, invRes.y), linearizeDepth(dD));
+    vec3 dx = dot(posR - fragPos, posR - fragPos) < dot(fragPos - posL, fragPos - posL) ? (posR - fragPos) : (fragPos - posL);
+    vec3 dy = dot(posU - fragPos, posU - fragPos) < dot(fragPos - posD, fragPos - posD) ? (posU - fragPos) : (fragPos - posD);
+    vec3 normal = normalize(cross(dy, dx));
+
+    vec3 viewDir = normalize(-fragPos);
+    float NdotV = max(dot(normal, viewDir), 0.0);
+    float fresnel = pow(1.0 - NdotV, 5.0) * 0.8 + 0.02;
+    vec3 reflDir = reflect(-viewDir, normal);
+
+    // Ray-march
+    float stepSize = uProj.z;
+    vec2 rayUV[10];
+    float rayZ[10];
+    for (int i = 0; i < 10; i++) {
+      float fi = float(i) + 1.0;
+      vec3 rp = fragPos + reflDir * stepSize * fi;
+      rayUV[i] = projectSS(rp);
+      rayZ[i] = rp.z;
+    }
+
+    // Read all sample depths + colors (UNIFORM)
+    float hitDepth[10];
+    vec3 hitColor[10];
+    for (int i = 0; i < 10; i++) {
+      hitDepth[i] = texture(depthTex, rayUV[i]).r;
+      hitColor[i] = texture(sceneColorTex, rayUV[i]).rgb;
+    }
+
+    // Find hit — cross-surface detection
+    vec3 reflColor = vec3(0.0);
+    float hitWeight = 0.0;
+    for (int i = 0; i < 10; i++) {
+      float sZ = linearizeDepth(hitDepth[i]);
+      float rayBehind = rayZ[i] - sZ;
+      float surfaceDiff = abs(sZ - linZ);
+      float hit = step(0.0, rayBehind) * step(0.3, surfaceDiff) * step(rayBehind, stepSize * 3.0);
+      float fade = 1.0 - float(i) / 10.0;
+      float take = hit * step(hitWeight, 0.001);
+      reflColor = mix(reflColor, hitColor[i], take);
+      hitWeight = mix(hitWeight, fade, take);
+    }
+
+    // Apply: scene + subtle reflection ONLY on water
+    vec3 reflection = reflColor * fresnel * hitWeight * validPixel * intensity;
+    fragColor = vec4(sceneColor + reflection, 1.0);
+  }
+}%
