@@ -102,25 +102,27 @@ export default class WorldHelper {
     }
 
     static getUnnededChunks(worldData: WorldData, allChunkPositionsNeeded: Vec3[]): number[] {
+        const neededSet = new Set<number>();
+        for (const p of allChunkPositionsNeeded) neededSet.add(parseVec3ToInt(p));
+
         const positionsToRemove: number[] = [];
-
-        Array.from(worldData.chunkDictionary.keys())
-            .filter(pos => !allChunkPositionsNeeded.some(neededPos => parseVec3ToInt(neededPos) === pos))
-            .forEach(pos => {
-                if (worldData.chunkDictionary.has(pos)) {
-                    positionsToRemove.push(pos);
-                }
-            });
-
+        for (const pos of worldData.chunkDictionary.keys()) {
+            if (!neededSet.has(pos)) positionsToRemove.push(pos);
+        }
         return positionsToRemove;
     }
 
     static getUnnededData(worldData: WorldData, allChunkDataPositionsNeeded: Vec3[]): number[] {
-        return Array.from(worldData.chunkDataDictionary.keys()).filter(
-            pos =>
-                !allChunkDataPositionsNeeded.some(neededPos => parseVec3ToInt(neededPos) === pos) &&
-                !worldData.chunkDataDictionary.get(pos)!.isModified
-        );
+        const neededSet = new Set<number>();
+        for (const p of allChunkDataPositionsNeeded) neededSet.add(parseVec3ToInt(p));
+
+        const positionsToRemove: number[] = [];
+        for (const pos of worldData.chunkDataDictionary.keys()) {
+            if (!neededSet.has(pos) && !worldData.chunkDataDictionary.get(pos)!.isModified) {
+                positionsToRemove.push(pos);
+            }
+        }
+        return positionsToRemove;
     }
 
     static removeChunkData(worldRef: World | PureWorld, pos: number): void {

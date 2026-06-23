@@ -1,4 +1,4 @@
-import { _decorator, Camera, Component, geometry, PhysicsRayResult, PhysicsSystem, Vec3 } from 'cc';
+import { _decorator, Camera, Component, director, geometry, PhysicsRayResult, PhysicsSystem, Vec3 } from 'cc';
 
 import { Chunk } from '../map/chunk';
 import { ChunkData } from '../map/chunkData';
@@ -27,12 +27,19 @@ export class BlockRaycaster extends Component {
     airPlaceDistance = 3.5;
 
     private ray = new geometry.Ray();
+    private _forward = new Vec3();
+    private _cachedFrame = -1;
+    private _cachedResult: BlockHitResult | null = null;
 
     raycastBlock(camera: Camera, world: World): BlockHitResult | null {
+        // Per-frame cache: if already raycasted this frame, return cached result
+        const frame = director.getTotalFrames();
+        if (frame === this._cachedFrame) return this._cachedResult;
+
+        this._cachedFrame = frame;
         this.ray.o.set(camera.node.worldPosition);
-        const forward = new Vec3();
-        Vec3.transformQuat(forward, Vec3.FORWARD, camera.node.worldRotation);
-        this.ray.d.set(forward);
+        Vec3.transformQuat(this._forward, Vec3.FORWARD, camera.node.worldRotation);
+        this.ray.d.set(this._forward);
 
         if (
             PhysicsSystem.instance.raycastClosest(
@@ -42,10 +49,12 @@ export class BlockRaycaster extends Component {
             )
         ) {
             const result = PhysicsSystem.instance.raycastClosestResult;
-            return this.processHit(result, world);
+            this._cachedResult = this.processHit(result, world);
+        } else {
+            this._cachedResult = null;
         }
 
-        return null;
+        return this._cachedResult;
     }
 
     /**
@@ -54,34 +63,36 @@ export class BlockRaycaster extends Component {
      */
     getAirPlacementTarget(camera: Camera, world: World): Vec3 | null {
         const origin = camera.node.worldPosition;
-        const forward = new Vec3();
-        Vec3.transformQuat(forward, Vec3.FORWARD, camera.node.worldRotation);
+        Vec3.transformQuat(this._forward, Vec3.FORWARD, camera.node.worldRotation);
 
-        const target = new Vec3(
-            Math.round(origin.x + forward.x * this.airPlaceDistance),
-            Math.round(origin.y + forward.y * this.airPlaceDistance),
-            Math.round(origin.z + forward.z * this.airPlaceDistance),
-        );
+        const tx = Math.round(origin.x + this._forward.x * this.airPlaceDistance);
+        const ty = Math.round(origin.y + this._forward.y * this.airPlaceDistance);
+        const tz = Math.round(origin.z + this._forward.z * this.airPlaceDistance);
 
-        const blockType = this.getBlockTypeAt(world, target.x, target.y, target.z);
+        const blockType = this.getBlockTypeAt(world, tx, ty, tz);
         if (blockType !== BlockType.Air && blockType !== BlockType.Empty) return null;
 
-        return target;
+        return new Vec3(tx, ty, tz);
     }
+
+    private _localPos = new Vec3();
 
     private getBlockTypeAt(world: World, x: number, y: number, z: number): BlockType {
         const chunkPos = Chunk.chunkPositionFromBlockCoords(world, x, y, z);
         const chunkData = world.worldData.chunkDataDictionary.get(parseVec3ToInt(chunkPos));
         if (!chunkData) return BlockType.Empty;
 
-        const localPos = new Vec3(
+        this._localPos.set(
             x - chunkPos.x,
             y - chunkPos.y,
             z - chunkPos.z,
         );
 
-        return Chunk.getBlockFromChunkCoordinatesVec3(chunkData, localPos);
+        return Chunk.getBlockFromChunkCoordinatesVec3(chunkData, this._localPos);
     }
+
+    private _hitNormal = new Vec3();
+    private _hitPoint = new Vec3();
 
     private processHit(result: PhysicsRayResult, world: World): BlockHitResult | null {
         const hitPoint = result.hitPoint;
@@ -107,14 +118,17 @@ export class BlockRaycaster extends Component {
 
         const blockType = Chunk.getBlockFromChunkCoordinatesVec3(chunkData, localPos);
 
+        this._hitNormal.set(normal);
+        this._hitPoint.set(hitPoint);
+
         return {
             hit: true,
             blockWorldPosition: blockWorldPos,
             blockLocalPosition: localPos,
             chunkData,
             blockType,
-            hitNormal: normal.clone(),
-            hitPoint: hitPoint.clone(),
+            hitNormal: this._hitNormal,
+            hitPoint: this._hitPoint,
         };
     }
 }

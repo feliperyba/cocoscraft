@@ -50,11 +50,6 @@ export class ChunkRenderer extends Component {
     // Track current buffer capacities to know when recreation is needed
     private landCapacity = { vertices: 0, indices: 0 };
     private waterCapacity = { vertices: 0, indices: 0 };
-    private collisionCapacity = { vertices: 0, indices: 0 };
-
-    start(): void {}
-
-    update(): void {}
 
     setIsModified(value: boolean): void {
         this.chunkData.isModified = value;
@@ -199,25 +194,18 @@ export class ChunkRenderer extends Component {
     }
 
     private updateCollisionMesh(geometry: primitives.IDynamicGeometry, vertexCount: number, indexCount: number): void {
-        // Always recreate collision mesh for physics to detect changes
-        // Dynamic mesh updateSubMesh might not trigger physics cooking update in all backends
+        // Physics collider requires a new mesh reference to rebuild its shape.
+        // updateSubMesh on the same reference does NOT trigger physics cooking.
         const options: primitives.ICreateDynamicMeshOptions = {
             maxSubMeshes: 1,
             maxSubMeshVertices: vertexCount,
             maxSubMeshIndices: indexCount,
         };
-
         const newMesh = utils.MeshUtils.createDynamicMesh(0, geometry, undefined, options);
-
-        // Explicitly clear and set to force update
-        // Toggle enabled to force physics system to refresh the shape
         this.meshCollider.enabled = false;
         this.meshCollider.mesh = newMesh;
         this.meshCollider.enabled = true;
-
         this.collisionMesh = newMesh;
-        this.collisionCapacity.vertices = vertexCount;
-        this.collisionCapacity.indices = indexCount;
     }
 
     /*private showDebugGizmo(): void {

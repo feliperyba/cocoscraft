@@ -59,6 +59,8 @@ export class BlockHighlight extends Component {
         return node;
     }
 
+    private _placePos = new Vec3();
+
     update(): void {
         const hit = this.raycaster.raycastBlock(this.camera, this.world);
 
@@ -67,13 +69,13 @@ export class BlockHighlight extends Component {
             this.highlightCube.setWorldPosition(hit.blockWorldPosition);
             this.highlightCube.setWorldRotation(Quat.IDENTITY);
 
-            const placePos = new Vec3(
+            this._placePos.set(
                 hit.blockWorldPosition.x + hit.hitNormal.x,
                 hit.blockWorldPosition.y + hit.hitNormal.y,
                 hit.blockWorldPosition.z + hit.hitNormal.z,
             );
             this.buildPreviewCube.active = true;
-            this.buildPreviewCube.setWorldPosition(placePos);
+            this.buildPreviewCube.setWorldPosition(this._placePos);
             this.buildPreviewCube.setWorldRotation(Quat.IDENTITY);
         } else {
             this.highlightCube.active = false;

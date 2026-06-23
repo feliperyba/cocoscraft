@@ -140,34 +140,29 @@ export class DigController extends Component {
     }
 
     private updateAdjacentChunks(worldPos: Vec3): void {
-        // Check if block is on chunk boundary
         const localX = worldPos.x % this.world.chunkSize;
-
-        const adjacentOffsets: Vec3[] = [];
-
-        if (localX === 0) adjacentOffsets.push(new Vec3(-1, 0, 0));
-        if (localX === this.world.chunkSize - 1) adjacentOffsets.push(new Vec3(1, 0, 0));
-
         const localZ = worldPos.z % this.world.chunkSize;
-        if (localZ === 0) adjacentOffsets.push(new Vec3(0, 0, -1));
-        if (localZ === this.world.chunkSize - 1) adjacentOffsets.push(new Vec3(0, 0, 1));
 
-        for (const offset of adjacentOffsets) {
-            const adjacentPos = Chunk.chunkPositionFromBlockCoords(
-                this.world,
-                worldPos.x + offset.x,
-                worldPos.y + offset.y,
-                worldPos.z + offset.z
-            );
+        if (localX === 0) this.queueAdjacent(worldPos, -1, 0, 0);
+        if (localX === this.world.chunkSize - 1) this.queueAdjacent(worldPos, 1, 0, 0);
+        if (localZ === 0) this.queueAdjacent(worldPos, 0, 0, -1);
+        if (localZ === this.world.chunkSize - 1) this.queueAdjacent(worldPos, 0, 0, 1);
+    }
 
-            const adjacentChunk = this.world.worldData.chunkDataDictionary.get(parseVec3ToInt(adjacentPos));
+    private queueAdjacent(worldPos: Vec3, dx: number, dy: number, dz: number): void {
+        const adjacentPos = Chunk.chunkPositionFromBlockCoords(
+            this.world,
+            worldPos.x + dx,
+            worldPos.y + dy,
+            worldPos.z + dz
+        );
 
-            if (adjacentChunk) {
-                adjacentChunk.invalidateMeshCache();
+        const adjacentChunk = this.world.worldData.chunkDataDictionary.get(parseVec3ToInt(adjacentPos));
 
-                if (this.world.queueChunkMeshUpdate) {
-                    this.world.queueChunkMeshUpdate(adjacentChunk);
-                }
+        if (adjacentChunk) {
+            adjacentChunk.invalidateMeshCache();
+            if (this.world.queueChunkMeshUpdate) {
+                this.world.queueChunkMeshUpdate(adjacentChunk);
             }
         }
     }

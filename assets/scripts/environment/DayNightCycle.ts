@@ -1,8 +1,8 @@
-import { _decorator, Component, MeshRenderer, Mesh, Node, Material, primitives, utils, Vec4, Camera, director, Layers, Vec3, DirectionalLight, Color, math, assetManager, EffectAsset } from 'cc';
+import { _decorator, Component, MeshRenderer, Mesh, Node, Material, primitives, utils, Vec4, Camera, director, Layers, Vec3, DirectionalLight, Color, math, EffectAsset } from 'cc';
 
 const { ccclass, property } = _decorator;
 
-const SKY_EFFECT_UUID = 'b8f4a102-0002-4b02-c002-b1b1b0000002';
+const GROUND_ALBEDO = new Vec4(0.22, 0.19, 0.14, 1.0);
 
 @ccclass('DayNightCycle')
 export class DayNightCycle extends Component {
@@ -11,6 +11,9 @@ export class DayNightCycle extends Component {
 
     @property(Camera)
     mainCamera: Camera | null = null;
+
+    @property(EffectAsset)
+    skyEffect: EffectAsset | null = null;
 
     @property
     dayDuration: number = 180;
@@ -22,6 +25,12 @@ export class DayNightCycle extends Component {
     private _skyNode: Node | null = null;
     private _skyMaterial: Material | null = null;
     private _sunDir: Vec3 = new Vec3(0, 1, 0);
+
+    // Cached scratch objects — mutated in place to avoid per-frame GC churn
+    private _scratchColor: Color = new Color(255, 255, 255, 255);
+    private _scratchVec4: Vec4 = new Vec4(0, 0, 0, 0);
+    private _scratchSkyDir: Vec4 = new Vec4(0, 1, 0, 0);
+    private _scratchCamPos: Vec3 = new Vec3();
 
     onLoad(): void {
         this._time = this.startTime;
@@ -38,6 +47,10 @@ export class DayNightCycle extends Component {
     }
 
     private createSkyDome(): void {
+        if (!this.skyEffect) {
+            console.error('DayNightCycle: skyEffect not assigned in inspector');
+            return;
+        }
         const node = new Node('SkyDome');
         const renderer = node.addComponent(MeshRenderer);
 
@@ -53,21 +66,15 @@ export class DayNightCycle extends Component {
         director.getScene()?.addChild(node);
         this._skyNode = node;
 
-        assetManager.loadAny({ uuid: SKY_EFFECT_UUID, type: EffectAsset }, (err, effect) => {
-            if (err || !effect) {
-                console.error('DayNightCycle: Failed to load sky effect:', err);
-                return;
-            }
-            const mat = new Material();
-            mat.initialize({ effectAsset: effect });
-            mat.setProperty('starBrightness', 1.2, 0);
-            mat.setProperty('milkyWayIntensity', 0.8, 0);
-            mat.setProperty('sunSize', 0.997, 0);
-            mat.setProperty('skyExposure', 1.05, 0);
-            renderer.setMaterial(mat, 0);
-            this._skyMaterial = mat;
-            this.updateSkyUniforms();
-        });
+        const mat = new Material();
+        mat.initialize({ effectAsset: this.skyEffect });
+        mat.setProperty('starBrightness', 1.2, 0);
+        mat.setProperty('milkyWayIntensity', 0.8, 0);
+        mat.setProperty('sunSize', 0.997, 0);
+        mat.setProperty('skyExposure', 1.05, 0);
+        renderer.setMaterial(mat, 0);
+        this._skyMaterial = mat;
+        this.updateSkyUniforms();
     }
 
     update(dt: number): void {
@@ -82,7 +89,7 @@ export class DayNightCycle extends Component {
 
     private updateSkyPosition(): void {
         if (!this._skyNode || !this.mainCamera) return;
-        const camPos = this.mainCamera.node.worldPosition;
+        const camPos = this.mainCamera.node.getWorldPosition(this._scratchCamPos);
         this._skyNode.setWorldPosition(camPos.x, camPos.y, camPos.z);
     }
 
@@ -135,7 +142,7 @@ export class DayNightCycle extends Component {
         lg = lerp(lg, 130, sunsetFactor * 0.6);
         lb = lerp(lb, 60, sunsetFactor * 0.6);
 
-        this.sunLight.color = new Color(
+        this.sunLight.color = this._scratchColor.set(
             math.clamp(Math.floor(lr), 0, 255),
             math.clamp(Math.floor(lg), 0, 255),
             math.clamp(Math.floor(lb), 0, 255),
@@ -161,14 +168,14 @@ export class DayNightCycle extends Component {
             const skyWarmR = lerp(0.0, 0.65, sunsetFactor * 0.5);
             const skyWarmG = lerp(0.0, 0.35, sunsetFactor * 0.5);
             const skyWarmB = lerp(0.0, 0.12, sunsetFactor * 0.5);
-            ambient.skyColorHDR = new Vec4(
+            ambient.skyColorHDR = this._scratchVec4.set(
                 skyR + skyWarmR,
                 skyG + skyWarmG,
                 skyB + skyWarmB,
                 lerp(0.05, 0.5, dayFactor)
             );
 
-            ambient.groundAlbedoHDR = new Vec4(0.22, 0.19, 0.14, 1.0);
+            ambient.groundAlbedoHDR = GROUND_ALBEDO;
         }
 
         // === FOG: dynamic atmospheric fog with height + sun scattering ===
@@ -194,7 +201,7 @@ export class DayNightCycle extends Component {
             fg = lerp(fg, 8, deepNight * 0.4);
             fb = lerp(fb, 20, deepNight * 0.4);
 
-            fog.fogColor = new Color(
+            fog.fogColor = this._scratchColor.set(
                 math.clamp(Math.floor(fr), 0, 255),
                 math.clamp(Math.floor(fg), 0, 255),
                 math.clamp(Math.floor(fb), 0, 255),
@@ -205,7 +212,8 @@ export class DayNightCycle extends Component {
 
     private updateSkyUniforms(): void {
         if (!this._skyMaterial) return;
-        this._skyMaterial.setProperty('sunDir', new Vec4(this._sunDir.x, this._sunDir.y, this._sunDir.z, this._time), 0);
+        this._scratchSkyDir.set(this._sunDir.x, this._sunDir.y, this._sunDir.z, this._time);
+        this._skyMaterial.setProperty('sunDir', this._scratchSkyDir, 0);
     }
 
     get timeOfDay(): number { return this._time; }

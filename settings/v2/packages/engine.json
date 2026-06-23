@@ -12,10 +12,10 @@
             "_value": true
           },
           "gfx-webgl": {
-            "_value": true
+            "_value": false
           },
           "gfx-webgl2": {
-            "_value": true
+            "_value": false
           },
           "gfx-webgpu": {
             "_value": true
@@ -206,8 +206,6 @@
           "custom-pipeline-post-process",
           "debug-renderer",
           "geometry-renderer",
-          "gfx-webgl",
-          "gfx-webgl2",
           "gfx-webgpu",
           "graphics",
           "light-probe",

@@ -140,35 +140,41 @@ CCProgram surface-fragment %{
     return sky;
   }
 
-  #define CC_SURFACES_FRAGMENT_MODIFY_BASECOLOR_AND_TRANSPARENCY
-  vec4 SurfacesFragmentModifyBaseColorAndTransparency() {
-    vec3 viewDir = normalize(cc_cameraPos.xyz - FSInput_worldPos);
-    vec3 baseNrm = normalize(FSInput_worldNormal);
-    float time = cc_time.x;
+  // === CACHED VALUES: computed once per fragment, reused across all hooks ===
+  vec3 _waterNrm = vec3(0.0, 1.0, 0.0);
+  vec3 _smoothNrm = vec3(0.0, 1.0, 0.0);
+  vec3 _viewDir = vec3(0.0, 0.0, 1.0);
+  float _fresnel = 0.0;
+  float _dayAmt = 1.0;
+  float _sunsetAmt = 0.0;
+  float _nightAmt = 0.0;
+  bool _cacheReady = false;
 
-    // Animated water normal
-    vec3 waterNrm = computeWaterNormal(FSInput_worldPos, time, waveParams.y, waveParams.x);
-
-    // Use animated normal for all calculations
-    vec3 nrm = normalize(mix(baseNrm, waterNrm, 0.85));
-
+  void ensureCache() {
+    if (_cacheReady) return;
+    _cacheReady = true;
+    _viewDir = normalize(cc_cameraPos.xyz - FSInput_worldPos);
+    _waterNrm = computeWaterNormal(FSInput_worldPos, cc_time.x, waveParams.y, waveParams.x);
+    _smoothNrm = normalize(mix(normalize(FSInput_worldNormal), _waterNrm, 0.85));
     vec3 sunDir = normalize(cc_mainLitDir.xyz);
     float sunH = sunDir.y;
-    float dayAmt = smoothstep(-0.08, 0.15, sunH);
-    float sunsetAmt = exp(-sunH * sunH * 12.0) * step(-0.15, sunH);
-    float nightAmt = 1.0 - dayAmt;
+    _dayAmt = smoothstep(-0.08, 0.15, sunH);
+    _sunsetAmt = exp(-sunH * sunH * 12.0) * step(-0.15, sunH);
+    _nightAmt = 1.0 - _dayAmt;
+    float NdotV = max(dot(_smoothNrm, _viewDir), 0.0);
+    _fresnel = clamp(pow(1.0 - NdotV, waveParams.z) * 1.3, 0.0, 1.0);
+  }
 
-    // Fresnel
-    float NdotV = max(dot(nrm, viewDir), 0.0);
-    float fresnel = pow(1.0 - NdotV, waveParams.z);
-    fresnel = clamp(fresnel * 1.3, 0.0, 1.0);
+  #define CC_SURFACES_FRAGMENT_MODIFY_BASECOLOR_AND_TRANSPARENCY
+  vec4 SurfacesFragmentModifyBaseColorAndTransparency() {
+    ensureCache();
 
     // Water depth tint: deep vs shallow based on viewing angle
-    // Steeper angles see deeper color, shallow angles see sky reflection
+    float NdotV = max(dot(_smoothNrm, _viewDir), 0.0);
     float depthFactor = 1.0 - NdotV;
 
     // Animated surface ripples for texture variation
-    float t = time * waveParams.x;
+    float t = cc_time.x * waveParams.x;
     vec2 rippleUV = FSInput_worldPos.xz * 0.4;
     float ripple1 = sin(rippleUV.x * 5.0 + t * 1.2) * cos(rippleUV.y * 5.0 + t * 0.8) * 0.5;
     float ripple2 = sin(rippleUV.x * 8.0 - t * 0.6) * sin(rippleUV.y * 6.0 + t * 1.5) * 0.5;
@@ -182,7 +188,7 @@ CCProgram surface-fragment %{
     float foamThreshold = 0.45;
     float foamNoise = fbm2d(FSInput_worldPos.xz * 1.5 + t * 0.3);
     float foam = smoothstep(foamThreshold, foamThreshold + 0.15, foamNoise);
-    foam *= smoothstep(0.0, 0.1, dayAmt + 0.3); // less foam at night
+    foam *= smoothstep(0.0, 0.1, _dayAmt + 0.3);
 
     #if USE_ALBEDO_MAP
       vec4 texC = texture(albedoMap, FSInput_texcoord);
@@ -190,11 +196,8 @@ CCProgram surface-fragment %{
       deepTint *= (0.9 + texC.rgb * 0.15);
     #endif
 
-    // Final color: mix deep water with foam
     vec3 finalColor = mix(deepTint, foamColor.rgb, foam * 0.3);
-
-    // Alpha based on fresnel and depth
-    float alpha = mix(albedo.a, 0.92, fresnel);
+    float alpha = mix(albedo.a, 0.92, _fresnel);
     alpha = mix(alpha, 1.0, foam * 0.5);
 
     return vec4(finalColor, alpha);
@@ -208,54 +211,40 @@ CCProgram surface-fragment %{
 
   #define CC_SURFACES_FRAGMENT_MODIFY_SHADING_NORMAL
   vec3 SurfacesFragmentModifyShadingNormal(in Vec3 v) {
-    // Override the shading normal with animated water normal
-    vec3 viewDir = normalize(cc_cameraPos.xyz - FSInput_worldPos);
-    vec3 waterNrm = computeWaterNormal(FSInput_worldPos, cc_time.x, waveParams.y, waveParams.x);
-    return normalize(mix(FSInput_worldNormal, waterNrm, 0.7));
+    ensureCache();
+    return normalize(mix(FSInput_worldNormal, _waterNrm, 0.7));
   }
 
   #define CC_SURFACES_FRAGMENT_MODIFY_EMISSIVE
   vec3 SurfacesFragmentModifyEmissive() {
-    vec3 viewDir = normalize(cc_cameraPos.xyz - FSInput_worldPos);
-    vec3 nrm = normalize(FSInput_worldNormal);
-    vec3 waterNrm = computeWaterNormal(FSInput_worldPos, cc_time.x, waveParams.y, waveParams.x);
-    vec3 smoothNrm = normalize(mix(nrm, waterNrm, 0.7));
+    ensureCache();
 
     vec3 sunDir = normalize(cc_mainLitDir.xyz);
-    float sunH = sunDir.y;
-    float dayAmt = smoothstep(-0.08, 0.15, sunH);
-    float sunsetAmt = exp(-sunH * sunH * 12.0) * step(-0.15, sunH);
-    float nightAmt = 1.0 - dayAmt;
-
-    // Fresnel for sky reflection
-    float NdotV = max(dot(smoothNrm, viewDir), 0.0);
-    float fresnel = pow(1.0 - NdotV, waveParams.z);
-    fresnel = clamp(fresnel * 1.3, 0.0, 1.0);
 
     // Reflection direction
-    vec3 reflDir = reflect(-viewDir, smoothNrm);
+    vec3 reflDir = reflect(-_viewDir, _smoothNrm);
 
     // Procedural sky reflection
-    vec3 skyRefl = sampleSkyColor(reflDir, sunDir, dayAmt, sunsetAmt);
+    vec3 skyRefl = sampleSkyColor(reflDir, sunDir, _dayAmt, _sunsetAmt);
 
     // Sun specular highlight (Blinn-Phong)
-    vec3 halfDir = normalize(sunDir + viewDir);
-    float NdotH = max(dot(smoothNrm, halfDir), 0.0);
+    vec3 halfDir = normalize(sunDir + _viewDir);
+    float NdotH = max(dot(_smoothNrm, halfDir), 0.0);
     float specHighlight = pow(NdotH, waveParams.w);
-    vec3 specColor = vec3(1.0, 0.95, 0.85) * specHighlight * 1.5 * dayAmt;
+    vec3 specColor = vec3(1.0, 0.95, 0.85) * specHighlight * 1.5 * _dayAmt;
 
     // Moon specular at night
     vec3 moonDir = normalize(vec3(-sunDir.x, abs(sunDir.y) * 0.3 + 0.15, -sunDir.z));
-    vec3 moonHalf = normalize(moonDir + viewDir);
-    float moonSpec = pow(max(dot(smoothNrm, moonHalf), 0.0), waveParams.w * 0.5);
-    specColor += vec3(0.7, 0.75, 0.85) * moonSpec * 0.3 * nightAmt;
+    vec3 moonHalf = normalize(moonDir + _viewDir);
+    float moonSpec = pow(max(dot(_smoothNrm, moonHalf), 0.0), waveParams.w * 0.5);
+    specColor += vec3(0.7, 0.75, 0.85) * moonSpec * 0.3 * _nightAmt;
 
     // Combine sky reflection and specular
-    vec3 emissive = skyRefl * fresnel + specColor;
+    vec3 emissive = skyRefl * _fresnel + specColor;
 
     // Subsurface scattering approximation: light through water
-    float sss = pow(max(dot(-sunDir, viewDir), 0.0), 2.0);
-    vec3 sssColor = shallowColor.rgb * 0.3 * sss * dayAmt;
+    float sss = pow(max(dot(-sunDir, _viewDir), 0.0), 2.0);
+    vec3 sssColor = shallowColor.rgb * 0.3 * sss * _dayAmt;
     emissive += sssColor;
 
     return emissive;

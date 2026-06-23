@@ -26,6 +26,8 @@ export class FPSCameraController extends Component {
 
     private angleVec = new Vec3();
     private curAngleVec = new Vec3();
+    private _scratchHQuat = new Quat();
+    private _scratchVQuat = new Quat();
 
     private angleSpeed = 30;
     private angleSmooth = 6;
@@ -64,8 +66,8 @@ export class FPSCameraController extends Component {
         this.curAngleVec.x = math.lerp(this.curAngleVec.x, this.angleVec.x, this.angleSmooth * deltaTime);
         this.curAngleVec.y = math.lerp(this.curAngleVec.y, this.angleVec.y, this.angleSmooth * deltaTime);
 
-        const horizontalRotation = Quat.fromEuler(new Quat(), 0, this.curAngleVec.y, 0);
-        const verticalRotation = Quat.fromEuler(new Quat(), this.curAngleVec.x, 180, 0);
+        const horizontalRotation = Quat.fromEuler(this._scratchHQuat, 0, this.curAngleVec.y, 0);
+        const verticalRotation = Quat.fromEuler(this._scratchVQuat, this.curAngleVec.x, 180, 0);
 
         this.charCtrl.node.setRotation(horizontalRotation);
         this.node.setRotation(verticalRotation);

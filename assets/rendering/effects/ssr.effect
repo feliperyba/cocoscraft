@@ -62,11 +62,11 @@ CCProgram ssr-fs %{
     float waterMask = smoothstep(0.08, 0.2, blueness);
 
     // Read center + neighbors
-    float dC = texture(depthTex, uv).r;
-    float dR = texture(depthTex, uv + vec2(invRes.x, 0.0)).r;
-    float dL = texture(depthTex, uv - vec2(invRes.x, 0.0)).r;
-    float dU = texture(depthTex, uv + vec2(0.0, invRes.y)).r;
-    float dD = texture(depthTex, uv - vec2(0.0, invRes.y)).r;
+        float dC = texture(depthTex, uv).r;
+        float dR = texture(depthTex, uv + vec2(invRes.x, 0.0)).r;
+        float dL = texture(depthTex, uv - vec2(invRes.x, 0.0)).r;
+        float dU = texture(depthTex, uv + vec2(0.0, invRes.y)).r;
+        float dD = texture(depthTex, uv - vec2(0.0, invRes.y)).r;
 
     float sky = step(dC, 0.999);
     float validPixel = waterMask * sky;

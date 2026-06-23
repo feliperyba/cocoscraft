@@ -1,11 +1,6 @@
-import { _decorator, Component, gfx, renderer, rendering, postProcess, assetManager, Material, EffectAsset, Vec4, director, Color } from 'cc';
-import { WaterLayer } from '../map/layers/waterLayer';
+import { _decorator, Component, gfx, renderer, rendering, postProcess, Material, EffectAsset, Vec4, director } from 'cc';
 
-const { ccclass } = _decorator;
-
-const SSAO_EFFECT_UUID = 'c9a0b203-0003-4b03-c003-c1c1c0000003';
-const SSR_EFFECT_UUID = 'c9a0b203-0004-4b04-c004-c2c2c0000004';
-const VOL_EFFECT_UUID = 'c9a0b203-0005-4b05-c005-c3c3c0000005';
+const { ccclass, property } = _decorator;
 
 let ssaoEffect: EffectAsset | null = null;
 let ssrEffect: EffectAsset | null = null;
@@ -20,6 +15,9 @@ class SSAOPass extends postProcess.SettingPass {
     checkEnable (camera: renderer.scene.Camera): boolean { return ssaoEffect !== null && this.enable; }
     slotName (camera: renderer.scene.Camera, index = 0): string { return this.lastPass!.slotName(camera, index); }
 
+    private _v4a = new Vec4();
+    private _v4b = new Vec4();
+
     public render (camera: renderer.scene.Camera, ppl: rendering.Pipeline): void {
         if (!this.lastPass) return;
         const cameraID = this.getCameraUniqueID(camera);
@@ -30,8 +28,8 @@ class SSAOPass extends postProcess.SettingPass {
         const fovY = camera.fov * Math.PI / 180.0;
         const tFovY = Math.tan(fovY * 0.5);
         const tFovX = tFovY * (camera.window.width / camera.window.height);
-        this.material.setProperty('uParams', new Vec4(camera.near, camera.far, 1.0 / camera.window.width, 1.0 / camera.window.height), 0);
-        this.material.setProperty('uProj', new Vec4(tFovX, tFovY, 0.8, 0.1), 0);
+        this.material.setProperty('uParams', this._v4a.set(camera.near, camera.far, 1.0 / camera.window.width, 1.0 / camera.window.height), 0);
+        this.material.setProperty('uProj', this._v4b.set(tFovX, tFovY, 0.8, 0.1), 0);
         const aoRT = super.slotName(camera, 0);
         ctx.clearBlack();
         ctx.addRenderPass('post-process', `SSAOCompute${cameraID}`)
@@ -53,6 +51,9 @@ class SSRPass extends postProcess.SettingPass {
     get setting () { return null as any; }
     checkEnable (camera: renderer.scene.Camera): boolean { return ssrEffect !== null && this.enable; }
 
+    private _v4a = new Vec4();
+    private _v4b = new Vec4();
+
     public render (camera: renderer.scene.Camera, ppl: rendering.Pipeline): void {
         if (!this.lastPass) return;
         const cameraID = this.getCameraUniqueID(camera);
@@ -63,8 +64,8 @@ class SSRPass extends postProcess.SettingPass {
         const fovY = camera.fov * Math.PI / 180.0;
         const tFovY = Math.tan(fovY * 0.5);
         const tFovX = tFovY * (camera.window.width / camera.window.height);
-        this.material.setProperty('uParams', new Vec4(camera.near, camera.far, 1.0 / camera.window.width, 1.0 / camera.window.height), 0);
-        this.material.setProperty('uProj', new Vec4(tFovX, tFovY, 2.0, 0.5), 0);
+        this.material.setProperty('uParams', this._v4a.set(camera.near, camera.far, 1.0 / camera.window.width, 1.0 / camera.window.height), 0);
+        this.material.setProperty('uProj', this._v4b.set(tFovX, tFovY, 2.0, 0.5), 0);
         const output = super.slotName(camera, 0);
         ctx.clearBlack();
         ctx.addRenderPass('post-process', `SSR${cameraID}`)
@@ -85,6 +86,9 @@ class VolumetricPass extends postProcess.SettingPass {
     outputNames = ['VolLight'];
     get setting () { return null as any; }
     checkEnable (camera: renderer.scene.Camera): boolean { return volEffect !== null && this.enable; }
+
+    private _v4a = new Vec4();
+    private _v4b = new Vec4();
 
     public render (camera: renderer.scene.Camera, ppl: rendering.Pipeline): void {
         if (!this.lastPass) return;
@@ -115,8 +119,8 @@ class VolumetricPass extends postProcess.SettingPass {
             if (lc) { r = lc.r; g = lc.g; b = lc.b; }
         }
 
-        this.material.setProperty('uLight', new Vec4(lightX, lightY, 0.8, 0.94), 0);
-        this.material.setProperty('uColor', new Vec4(r, g, b, 0.15), 0);
+        this.material.setProperty('uLight', this._v4a.set(lightX, lightY, 0.8, 0.94), 0);
+        this.material.setProperty('uColor', this._v4b.set(r, g, b, 0.15), 0);
         const output = super.slotName(camera, 0);
         ctx.clearBlack();
         ctx.addRenderPass('post-process', `VolLight${cameraID}`)
@@ -133,28 +137,9 @@ class VolumetricPass extends postProcess.SettingPass {
 
 function clamp01 (v: number): number { return v < 0 ? 0 : v > 1 ? 1 : v; }
 
-// Water level sync
-let waterLevel = 0.5;
-let cachedWaterLayer: WaterLayer | null = null;
-function syncWaterLevel (): void {
-    if (!cachedWaterLayer) {
-        const scene = director.getScene();
-        if (scene) cachedWaterLayer = scene.getComponentInChildren(WaterLayer);
-    }
-    if (cachedWaterLayer) waterLevel = cachedWaterLayer.waterLevel + 0.5;
-}
-
-// Load effects
-function loadEffects (): void {
-    let loaded = 0; const total = 3;
-    const done = () => { if (++loaded >= total) registerPasses(); };
-    assetManager.loadAny({ uuid: SSAO_EFFECT_UUID, type: EffectAsset }, (e, f) => { if (!e && f) { ssaoEffect = f; console.log('SSAO effect loaded'); } done(); });
-    assetManager.loadAny({ uuid: SSR_EFFECT_UUID, type: EffectAsset }, (e, f) => { if (!e && f) { ssrEffect = f; console.log('SSR effect loaded'); } done(); });
-    assetManager.loadAny({ uuid: VOL_EFFECT_UUID, type: EffectAsset }, (e, f) => { if (!e && f) { volEffect = f; console.log('VOL effect loaded'); } done(); });
-}
-
 function registerPasses (): void {
     if (passesRegistered) return;
+    if (!ssaoEffect) return;
     const builder = rendering.getCustomPipeline('Custom') as postProcess.PostProcessBuilder;
     if (!builder) { setTimeout(registerPasses, 200); return; }
     builder.insertPass(new SSAOPass(), postProcess.ForwardPass);
@@ -165,7 +150,30 @@ function registerPasses (): void {
     console.log('CustomRendering: All passes registered');
 }
 
-loadEffects();
-
 @ccclass('CustomRendering')
-export class CustomRendering extends Component { }
+export class CustomRendering extends Component {
+    @property(EffectAsset)
+    ssaoEffect: EffectAsset | null = null;
+
+    @property(EffectAsset)
+    ssrEffect: EffectAsset | null = null;
+
+    @property(EffectAsset)
+    volumetricEffect: EffectAsset | null = null;
+
+    onLoad(): void {
+        if (this.ssaoEffect) { ssaoEffect = this.ssaoEffect; registerPasses(); }
+        if (this.ssrEffect) ssrEffect = this.ssrEffect;
+        if (this.volumetricEffect) volEffect = this.volumetricEffect;
+    }
+
+    start(): void {
+        // Disable shading scale — it creates depth/color RT size mismatch on WebGPU in builds
+        const PP = (postProcess as any).PostProcess;
+        if (PP && Array.isArray(PP.all)) {
+            for (const pp of PP.all) {
+                pp.shadingScale = 1;
+            }
+        }
+    }
+}

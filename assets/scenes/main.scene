@@ -460,18 +460,18 @@
       "x": -20,
       "y": 70
     },
-    "_target": null,
+    "target": null,
     "radiusScaleSpeed": 0.25,
     "minRadius": 5,
     "maxRadius": 12,
     "followTargetRotationY": false,
-    "_startRotation": {
+    "startRotation": {
       "__type__": "cc.Vec3",
       "x": 0,
       "y": 0,
       "z": 0
     },
-    "_targetRadius": 10,
+    "targetRadius": 10,
     "_id": "b9e6+A7lREK5HIVwtvmEHc"
   },
   {
@@ -698,7 +698,7 @@
     "value": {
       "__type__": "cc.Vec3",
       "x": 3.4590001106262207,
-      "y": 0.053999991416931126,
+      "y": 0.05399997901916498,
       "z": 2.190999984741211
     }
   },
@@ -87838,8 +87838,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 640,
-      "y": 360,
+      "x": 960,
+      "y": 540,
       "z": 0
     },
     "_lrot": {
@@ -87924,7 +87924,7 @@
     "_priority": 1073741824,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 388.42767295597486,
+    "_orthoHeight": 540,
     "_near": 1,
     "_far": 2000,
     "_color": {
@@ -88120,8 +88120,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1280,
-      "height": 720
+      "width": 1920,
+      "height": 1080
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -88401,6 +88401,7 @@
       "z": 0
     },
     "_distance": 0,
+    "_planeBias": 1,
     "_shadowColor": {
       "__type__": "cc.Color",
       "r": 76,

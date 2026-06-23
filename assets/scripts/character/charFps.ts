@@ -126,13 +126,13 @@ export class CharacterFps extends Component {
         }
 
         //control impulse
-        const desiredVelocity = new Vec3(
+        this.tempVec3.set(
             this.controlX * this.currentSpeed,
             this.playerVelocity.y,
             this.controlZ * this.currentSpeed
         );
 
-        Vec3.lerp(this.playerVelocity, this.playerVelocity, desiredVelocity, this.linearDamping * deltaTime);
+        Vec3.lerp(this.playerVelocity, this.playerVelocity, this.tempVec3, this.linearDamping * deltaTime);
         this.playerVelocity.y += this.gravityValue * deltaTime;
 
         this.playerVelocity.z += this.controlZ * this.currentSpeed;
